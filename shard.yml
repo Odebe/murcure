@@ -13,6 +13,5 @@ crystal: 0.30.1
 license: MIT
 
 dependencies:
-  await_async:
-    github: anykeyh/await_async
-    branch: master
+  protobuf:
+    github: jeromegn/protobuf.cr

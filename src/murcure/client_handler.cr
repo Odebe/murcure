@@ -1,31 +1,48 @@
 module Murcure
   class ClientHandler
-    def initialize(input_channel : Channel(Murcure::Message), output_channel : Channel(Murcure::Message), client_socket : TCPSocket)
-      @client = Murcure::Client.new(client_socket)
-      
-      @input_channel = input_channel # data from server/other clients
-      @output_channel = output_channel # data to server/other_client
-    end
+    # data from server/other clien
+    @input_channel : Channel(Murcure::Message)
+    # data to server/other_client
+    @output_channel : Channel(Murcure::Message)
 
-    def client_channel
-      @client_channel
+    @client : Murcure::Client
+    @message_handler : Murcure::MessageHandler
+
+    getter output_channel : Channel(Murcure::Message)
+
+    def initialize(input_channel, output_channel, client_socket : TCPSocket, context : OpenSSL::SSL::Socket::Server)
+      @input_channel = input_channel
+      @output_channel = output_channel
+
+      @client = Murcure::Client.new(client_socket, context)
+      @message_handler = Murcure::MessageHandler.new(@client)
     end
 
     def call
-      version = handle_version(recieve)
-      puts "version: #{version}"
+      send_to_client version_message
+      
+      version = handle_version(receive) 
+      puts "version: #{version.inspect}"
+
+      auth_message = handle_auth(receive)
+
+      send_to_client crypto_setup_message
+      send_to_client channel_states_message
+      send_to_client user_states_message
+      send_to_client server_sync_message
 
       loop do
-        # TODO
+        message = recieve
+        # TODO: process messages
       end
     end
 
-    private def recieve
-      decode_proto(@client.recieve)
+    private def receive
+      @message_handler.receive
     end
 
-    private def decode_proto(message)
-      # TODO
+    private def handle_auth(message)
+
     end
 
     private def handle_version(message)
