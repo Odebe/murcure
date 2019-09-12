@@ -1,7 +1,9 @@
 module Murcure
   class Server
+    @context : OpenSSL::SSL::Context::Server
+
     def initialize(port : Int32)
-      @server = TCPServer.new(port)
+      @server = TCPServer.new("localhost", port)
       @context = setup_context
       @client_handlers = [] of Murcure::ClientHandler
       @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
@@ -23,17 +25,19 @@ module Murcure
       # TODO: handle messages from clients
     end
 
-    private def handle_client_connection(socket)
-      handler = Murcure::ClientHandler.new(@server_channel, Channel(Murcure::Message).new, client_socket, @context)
+    private def handle_client_connection(client_socket)
+      client = Murcure::Client.new(client_socket, @context)
+      handler = Murcure::ClientHandler.new(client, @server_channel)
+      
       @client_handlers << handler
       
       spawn handler.call
     end
 
-    private def setup_context
+    private def setup_context : OpenSSL::SSL::Context::Server
       context = OpenSSL::SSL::Context::Server.new
-      context.private_key = "/path/to/private.key"
-      context.certificate_chain = "/path/to/public.cert"
+      context.private_key = "key.pem"
+      context.certificate_chain = "certificate.pem"
       context
     end
   end

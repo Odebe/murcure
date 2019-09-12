@@ -1,14 +1,9 @@
 module Murcure
   class Client
-
-    @tcp_socket : TCPSocket
-    # @context : OpenSSL::SSL::Socket::Server
     @ssl_socket : OpenSSL::SSL::Socket::Server
 
-    def initialize(tcp_socket : TCPSocket, context : OpenSSL::SSL::Socket::Server)
-      @tcp_socket = tcp_socket
-      # @context = context
-      @ssl_socket = OpenSSL::SSL::Socket::Server.new(@tcp_socket, context)
+    def initialize(tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
+      @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
     end
 
     def receive_head: Bytes
