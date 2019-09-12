@@ -6,6 +6,10 @@ module Murcure
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
     end
 
+    def send_stack(data)
+      
+    end
+
     def receive_stack
       header_bytes = receive_header
       
@@ -22,7 +26,6 @@ module Murcure
     private def receive(size : UInt32) : Bytes
       bytes = Bytes.new(size)
       @ssl_socket.read(bytes)
-      # puts bytes.inspect
       bytes
     end
   end

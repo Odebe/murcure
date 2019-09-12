@@ -7,6 +7,10 @@ module Murcure
       @client = client
     end
 
+    def send(message : Murcure::Message)
+
+    end
+
     def receive
       stack = @client.receive_stack
       
@@ -16,7 +20,7 @@ module Murcure
       message = proto.from_protobuf(memory)
       puts message.inspect
 
-      message
+      Murcure::Message.new(message, Murcure::ProtosHandler.find_type(stack[:type]))
     end
   end
 end
