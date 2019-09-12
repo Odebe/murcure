@@ -8,17 +8,15 @@ module Murcure
     end
 
     def receive
-      head_bytes = @client.receive_head
-      body_bytes = @client.receive_body(calc_body_size(head_bytes))
-       
-    end
+      stack = @client.receive_stack
+      
+      proto = Murcure::ProtosHandler.find_struct(stack[:type])
 
-    def call(bytes : Bytes) : Murcure::Message
-    end
+      memory = IO::Memory.new(stack[:payload])
+      message = proto.from_protobuf(memory)
+      puts message.inspect
 
-    private def calc_body_size(head_bytes : Bytes) : Int32
-      # TODO
-      0
+      message
     end
   end
 end

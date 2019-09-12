@@ -1,5 +1,9 @@
 version: 1.0
 shards:
+  bindata:
+    github: spider-gazelle/bindata
+    version: 1.1.1
+
   protobuf:
     github: jeromegn/protobuf.cr
     version: 2.1.2

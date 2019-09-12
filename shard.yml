@@ -15,3 +15,5 @@ license: MIT
 dependencies:
   protobuf:
     github: jeromegn/protobuf.cr
+  bindata:
+    github: spider-gazelle/bindata

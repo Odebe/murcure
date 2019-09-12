@@ -2,7 +2,7 @@
 require "protobuf"
 
 module Murcure
-  module Proto
+  module Protos
     
     struct Version
       include Protobuf::Message
