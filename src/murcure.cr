@@ -3,6 +3,7 @@ require "openssl"
 require "bindata"
 
 require "./murcure/*"
+# require "./murcure/message_decorators/*"
 
 # TODO: Write documentation for `Murcure`
 module Murcure

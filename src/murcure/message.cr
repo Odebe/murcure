@@ -1,10 +1,22 @@
 module Murcure
   class Message
-    @struct : Protobuf::Message
+    @proto_struct : Protobuf::Message
 
-    def initialize(proto_struct, type : Symbol)
-      @struct = proto_struct
+    getter proto_struct : Protobuf::Message
+    getter type : Symbol
+
+    def initialize(proto_struct, type)
+      @proto_struct = proto_struct
       @type = type
+    end
+
+    def decorator
+      case @type
+      when :ping
+        Murcure::MessageDecorators::PingDecorator.new(@proto_struct)
+      else
+        raise "decorator not defined"
+      end
     end
   end
 end

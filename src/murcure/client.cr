@@ -6,8 +6,10 @@ module Murcure
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
     end
 
-    def send_stack(data)
-      
+    def send(type_num : Int, message : Bytes)
+      @ssl_socket << type_num
+      @ssl_socket << message.bytesize
+      @ssl_socket << message
     end
 
     def receive_stack

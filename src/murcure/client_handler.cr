@@ -18,37 +18,50 @@ module Murcure
       # send_to_client version_message
       
       version = handle_version(receive) 
-      puts "version: #{version.inspect}"
-
       auth_message = handle_auth(receive)
 
-      # send_to_client crypto_setup_message
+      # send_to_client :crypro, crypto_setup_message
       # send_to_client channel_states_message
       # send_to_client user_states_message
       # send_to_client server_sync_message
+      
+      loop do        
+        message = receive        
+        if message.type == :ping
+          send_to_client :ping, ping_message(message)
+          next
+        end
 
-      # loop do
-      #   message = receive
-      #   # TODO: process messages
-      # end
+        # TODO: process messages
+      end
     end
 
-    private def receive
-      @message_handler.receive
+    ## MESSAGES
+
+    def ping_message(message : Murcure::Message) : Hash
+      { "timestamp" => 123123 }
     end
+
+    ## SEND
+
+    private def send_to_client(type : Symbol, message : Hash)
+      @message_handler.send(type, message)
+    end
+
+    ## HANDLE
 
     private def handle_auth(message)
-
+      message # TODO
     end
 
     private def handle_version(message)
-      message
-      # { 
-      #   version: message.version,
-      #   release: message.release,
-      #   os: message.os,
-      #   os_ver: message.os_version,
-      # } 
+      message # TODO
+    end
+
+    private def receive : Murcure::Message
+      res = @message_handler.receive
+      puts res.inspect
+      res
     end
   end
 end
