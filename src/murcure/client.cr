@@ -6,10 +6,25 @@ module Murcure
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
     end
 
-    def send(type_num : Int, message : Bytes)
-      @ssl_socket << type_num
-      @ssl_socket << message.bytesize
-      @ssl_socket << message
+    def send(type_num : Int, message_bytes : Bytes)
+      memory = IO::Memory.new
+      type_num.to_u16.to_io(memory, IO::ByteFormat::NetworkEndian)
+      memory.rewind
+      type_bytes = Bytes.new(2) 
+      memory.read(type_bytes)
+      @ssl_socket.unbuffered_write(type_bytes)
+      # puts "type_bytes: #{type_bytes}"
+
+      memory = IO::Memory.new
+      message_bytes.bytesize.to_u32.to_io(memory, IO::ByteFormat::NetworkEndian)
+      memory.rewind
+      bytesize_bytes = Bytes.new(4) 
+      memory.read(bytesize_bytes)
+      @ssl_socket.unbuffered_write(bytesize_bytes)
+      # puts "type_bytes: #{bytesize_bytes}"
+
+      @ssl_socket.unbuffered_write(message_bytes)
+      # puts "type_bytes: #{message_bytes}"
     end
 
     def receive_stack

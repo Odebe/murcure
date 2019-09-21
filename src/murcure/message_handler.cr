@@ -22,7 +22,7 @@ module Murcure
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
-      puts message.inspect
+      # puts message.inspect
 
       Murcure::Message.new(message, type)
     end

@@ -39,7 +39,7 @@ module Murcure
     ## MESSAGES
 
     def ping_message(message : Murcure::Message) : Hash
-      { "timestamp" => 123123 }
+      { "timestamp" => 9978166 }
     end
 
     ## SEND
