@@ -1,28 +1,23 @@
 module Murcure
   class MessageHandler
 
-    @client : Murcure::Client
+    def initialize(@clients : Array(NamedTuple(uuid: UUID, client: Murcure::Client, handler: Murcure::ClientHandler, room: Int16))); end
 
-    def initialize(client : Murcure::Client)
-      @client = client
+    def call(message : Murcure::Message)
+      sender = @clients.find { |c| c[:uuid] == message.uuid }
+      return if sender.nil?
+      
+      case message.type
+      when :ping
+        process_ping(message, sender)
+      else
+        nil
+        # raise "not defined message"
+      end
     end
 
-    def send(type : Symbol, message : Hash)
-      type_num = Murcure::ProtosHandler.find_type_number(type)
-      proto_resp = Murcure::MessageBuilder.new(type).call(message)
-      @client.send(type_num, proto_resp)
-    end
-
-    def receive : Murcure::Message
-      stack = @client.receive_stack
-      
-      proto = Murcure::ProtosHandler.find_struct(stack[:type])
-      type = Murcure::ProtosHandler.find_type(stack[:type])
-
-      memory = IO::Memory.new(stack[:payload])
-      message = proto.from_protobuf(memory)
-      
-      Murcure::Message.new(message, type, @client.uuid)
+    private def process_ping(message : Murcure::Message, sender)
+      sender[:handler].client_channel.send(message)
     end
   end
 end
