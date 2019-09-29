@@ -4,7 +4,7 @@ module Murcure
       @type = type
     end
 
-    def call(data : Hash)
+    def call(data : Hash) : Bytes
       message = process_message(@type, data)
       message_memory = message.to_protobuf
       message_memory.rewind
@@ -25,7 +25,7 @@ module Murcure
     def process_ping_message(data)
       m = Murcure::Protos::Ping.new
       m.timestamp = data["timestamp"].to_u64
-      puts "message: #{m}"
+      # puts "message: #{m}"
       m
       # m.good = 1
       # m.late = 1

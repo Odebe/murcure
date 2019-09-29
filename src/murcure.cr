@@ -1,7 +1,7 @@
 require "socket"
 require "openssl"
 require "bindata"
-
+require "uuid"
 
 require "./murcure/*"
 # require "./murcure/message_decorators/*"

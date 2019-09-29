@@ -1,9 +1,11 @@
 module Murcure
   class Client
     @ssl_socket : OpenSSL::SSL::Socket::Server
+    getter uuid : UUID
 
-    def initialize(tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
+    def initialize(uuid : UUID, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
+      @uuid = uuid
     end
 
     def send(type_num : Int, message_bytes : Bytes)
