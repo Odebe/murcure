@@ -30,7 +30,7 @@ module Murcure
         optional :username, :string, 1
         optional :password, :string, 2
         repeated :tokens, :string, 3
-        repeated :celt_versions, :int32, 4
+        repeated :celt_versions, :uint64, 4
         optional :opus, :bool, 5, default: false
       end
     end
