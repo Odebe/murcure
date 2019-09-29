@@ -37,7 +37,6 @@ module Murcure
     
     struct Ping
       include Protobuf::Message
-      include Murcure::MessageInterface
       
       contract_of "proto2" do
         optional :timestamp, :uint64, 1

@@ -4,19 +4,12 @@ module Murcure
 
     getter proto_struct : Protobuf::Message
     getter type : Symbol
+    getter uuid : UUID
 
-    def initialize(proto_struct, type)
+    def initialize(proto_struct, type, uuid)
       @proto_struct = proto_struct
       @type = type
-    end
-
-    def decorator
-      case @type
-      when :ping
-        Murcure::MessageDecorators::PingDecorator.new(@proto_struct)
-      else
-        raise "decorator not defined"
-      end
+      @uuid = uuid
     end
   end
 end

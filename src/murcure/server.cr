@@ -5,33 +5,41 @@ module Murcure
     def initialize(port : Int32)
       @server = TCPServer.new("localhost", port)
       @context = setup_context
-      @client_handlers = [] of Murcure::ClientHandler
       @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
+      @clients = [] of NamedTuple(uuid: UUID, client: Murcure::Client, handler: Murcure::ClientHandler)
     end
 
     def run!
-      loop do
-        handle_clients_messages
-        
-        # new connection
-        if client_socket = @server.accept?
-          handle_client_connection(client_socket)
-        end
+      start_new_clients_handling
 
+      loop do
+        message = @server_channel.receive
+        # puts "\nreceived from #{message.uuid} in main channels:\n#{message.inspect}\n"
+        sender_uuid = message.uuid
+        sender = @clients.find { |c| c[:uuid] == sender_uuid }
+        if sender
+          # puts "\nsending back to #{sender[:uuid]}, message:\n#{message.inspect}\n"
+          sender[:handler].client_channel.send(message)
+        else
+          next
+        end
       end
     end
 
-    private def handle_clients_messages
-      # TODO: handle messages from clients
-    end
+    private def start_new_clients_handling
+      spawn do
+        loop do
+          if client_socket = @server.accept?
+            uuid = UUID.random
+            client = Murcure::Client.new(uuid, client_socket, @context)
+            handler = Murcure::ClientHandler.new(client, @server_channel)
+            
+            @clients << { uuid: uuid, client: client, handler: handler }
 
-    private def handle_client_connection(client_socket)
-      client = Murcure::Client.new(client_socket, @context)
-      handler = Murcure::ClientHandler.new(client, @server_channel)
-      
-      @client_handlers << handler
-      
-      spawn handler.call
+            spawn handler.call
+          end
+        end 
+      end
     end
 
     private def setup_context : OpenSSL::SSL::Context::Server

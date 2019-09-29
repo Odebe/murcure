@@ -22,9 +22,7 @@ module Murcure
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
-      # puts message.inspect
-
-      Murcure::Message.new(message, type)
+      Murcure::Message.new(message, type, @client.uuid)
     end
   end
 end

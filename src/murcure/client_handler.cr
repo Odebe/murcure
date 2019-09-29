@@ -1,38 +1,44 @@
 module Murcure
   class ClientHandler
     # data from server/other clien
-    @server_channel : Channel(Murcure::Message)
+    # @server_channel : Channel(Murcure::Message)
     # data to server/other_client
-    @client_channel : Channel(Murcure::Message)
+    # @client_channel : Channel(Murcure::Message)
 
-    @message_handler : Murcure::MessageHandler
+    # @message_handler : Murcure::MessageHandler
     getter client_channel : Channel(Murcure::Message)
 
     def initialize(client : Murcure::Client, server_channel : Channel(Murcure::Message))
+      @client = client
       @server_channel = server_channel
       @client_channel = Channel(Murcure::Message).new
       @message_handler = Murcure::MessageHandler.new(client)
     end
 
     def call
-      # send_to_client version_message
-      
-      version = handle_version(receive) 
-      auth_message = handle_auth(receive)
+      spawn handle_messages_from_client
+      spawn handle_messages_from_server
+    end
 
-      # send_to_client :crypro, crypto_setup_message
-      # send_to_client channel_states_message
-      # send_to_client user_states_message
-      # send_to_client server_sync_message
-      
-      loop do        
-        message = receive        
+    def handle_messages_from_server
+      loop do
+        message = @client_channel.receive
         if message.type == :ping
           send_to_client :ping, ping_message(message)
           next
         end
 
-        # TODO: process messages
+      end
+    end
+
+    def handle_messages_from_client
+      # version = handle_version(@message_handler.receive) 
+      # auth_message = handle_auth(@message_handler.receive)
+
+      loop do
+        message = @message_handler.receive     
+        # puts "received from client socket: #{message}"
+        @server_channel.send(message)
       end
     end
 
@@ -56,12 +62,6 @@ module Murcure
 
     private def handle_version(message)
       message # TODO
-    end
-
-    private def receive : Murcure::Message
-      res = @message_handler.receive
-      puts res.inspect
-      res
     end
   end
 end
