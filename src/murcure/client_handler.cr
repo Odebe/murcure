@@ -12,7 +12,7 @@ module Murcure
       @client = client
       @server_channel = server_channel
       @client_channel = Channel(Murcure::Message).new
-      @message_handler = Murcure::MessageHandler.new(client)
+      # @message_handler = Murcure::MessageHandler.new(client)
     end
 
     def call
@@ -23,6 +23,7 @@ module Murcure
     def handle_messages_from_server
       loop do
         message = @client_channel.receive
+        puts "\nreceived from main channel in #{message.uuid}:\n#{message.inspect}\n"
         if message.type == :ping
           send_to_client :ping, ping_message(message)
           next
@@ -36,8 +37,8 @@ module Murcure
       # auth_message = handle_auth(@message_handler.receive)
 
       loop do
-        message = @message_handler.receive     
-        # puts "received from client socket: #{message}"
+        message = @client.receive   
+        puts "received from client socket: #{message.inspect}"
         @server_channel.send(message)
       end
     end
@@ -51,7 +52,8 @@ module Murcure
     ## SEND
 
     private def send_to_client(type : Symbol, message : Hash)
-      @message_handler.send(type, message)
+      # @message_handler.send(type, message)
+      @client.send(type, message)
     end
 
     ## HANDLE
