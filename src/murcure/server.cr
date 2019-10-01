@@ -6,13 +6,11 @@ module Murcure
       @server = TCPServer.new("localhost", port)
       @context = setup_context
       @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
-      @clients = [] of NamedTuple(uuid: UUID, client: Murcure::Client, handler: Murcure::ClientHandler, room: Int16)
-      @rooms = [] of NamedTuple(id: Int32, users: Array(UUID))
-      @message_handler = Murcure::MessageHandler.new(@rooms, @clients)
+      @clients = Murcure::ClientStorage.new
+      @message_handler = Murcure::MessageHandler.new(@clients)
     end
 
     def run!
-      setup_rooms
       start_new_clients_handling
 
       loop do
@@ -22,25 +20,15 @@ module Murcure
       end
     end
 
-    # TODO: get from db
-    private def setup_rooms
-      @rooms << { id: 0, users: [] of UUID }
-    end
-
     private def start_new_clients_handling
       spawn do
         loop do
           if client_socket = @server.accept?
             uuid = UUID.random
-            client = Murcure::Client.new(uuid, client_socket, @context)
+            client = Murcure::ClientSocket.new(uuid, client_socket, @context)
             handler = Murcure::ClientHandler.new(client, @server_channel)
-            
-            @clients << { uuid: uuid, client: client, handler: handler, room: 0_i16 }
-            root_room = @rooms.find { |r| r[:id] == 0 }
-            if root_room
-              root_room[:users] << uuid
-            end
-
+            @clients.add_client(uuid, handler)
+            @clients.update_attr(uuid, :room_id, 0_i32)
             spawn handler.call
           end
         end 

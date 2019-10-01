@@ -8,7 +8,7 @@ module Murcure
     # @message_handler : Murcure::MessageHandler
     getter client_channel : Channel(Murcure::Message)
 
-    def initialize(client : Murcure::Client, server_channel : Channel(Murcure::Message))
+    def initialize(client : Murcure::ClientSocket, server_channel : Channel(Murcure::Message))
       @client = client
       @server_channel = server_channel
       @client_channel = Channel(Murcure::Message).new

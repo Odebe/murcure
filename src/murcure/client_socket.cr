@@ -1,39 +1,39 @@
 module Murcure
-  class Client
+  class ClientSocket
     @ssl_socket : OpenSSL::SSL::Socket::Server
-    @version : Hash(Symbol, (String | UInt32 | Nil))
-    @credits : Hash(Symbol, (String | UInt32 | Nil | Array(String)))
+    # @version : Hash(Symbol, (String | UInt32 | Nil))
+    # @credits : Hash(Symbol, (String | UInt32 | Nil | Array(String)))
 
     getter uuid : UUID
-    getter version
-    getter credits
+    # getter version
+    # getter credits
 
     def initialize(@uuid : UUID, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
-      @version = {} of Symbol => (String | UInt32 | Nil)
-      @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
+      # @version = {} of Symbol => (String | UInt32 | Nil)
+      # @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
     end
 
-    # TODO: move somewhere
-    def save_credits!(message)
-      proto = message.proto_struct
-      return unless proto.is_a?(Murcure::Protos::Authenticate)
+    # # TODO: move somewhere
+    # def save_credits!(message)
+    #   proto = message.proto_struct
+    #   return unless proto.is_a?(Murcure::Protos::Authenticate)
 
-      @credits[:username] = proto.username
-      @credits[:password] = proto.password
-      @credits[:tokens] = proto.tokens
-    end
+    #   @credits[:username] = proto.username
+    #   @credits[:password] = proto.password
+    #   @credits[:tokens] = proto.tokens
+    # end
 
-    # TODO: move somewhere
-    def save_version!(message)
-      proto = message.proto_struct
-      return unless proto.is_a?(Murcure::Protos::Version)
+    # # TODO: move somewhere
+    # def save_version!(message)
+    #   proto = message.proto_struct
+    #   return unless proto.is_a?(Murcure::Protos::Version)
       
-      @version[:version] = proto.version
-      @version[:release] = proto.release
-      @version[:os] = proto.os
-      @version[:os_version] = proto.os_version
-    end
+    #   @version[:version] = proto.version
+    #   @version[:release] = proto.release
+    #   @version[:os] = proto.os
+    #   @version[:os_version] = proto.os_version
+    # end
 
     def receive : Murcure::Message
       stack = receive_stack
