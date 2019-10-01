@@ -1,14 +1,38 @@
 module Murcure
   class Client
     @ssl_socket : OpenSSL::SSL::Socket::Server
-    # @version : NamedTuple(version: Int32, release: String, os: String, os_version: String)
-    
+    @version : Hash(Symbol, (String | UInt32 | Nil))
+    @credits : Hash(Symbol, (String | UInt32 | Nil | Array(String)))
+
     getter uuid : UUID
+    getter version
+    getter credits
 
     def initialize(@uuid : UUID, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
-      # @version = NamedTuple(version: Int32, release: String, os: String, os_version: String)
-      # @version = { version: 0, release: "Nil", os: "Nil", os_version: "Nil" }
+      @version = {} of Symbol => (String | UInt32 | Nil)
+      @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
+    end
+
+    # TODO: move somewhere
+    def save_credits!(message)
+      proto = message.proto_struct
+      return unless proto.is_a?(Murcure::Protos::Authenticate)
+
+      @credits[:username] = proto.username
+      @credits[:password] = proto.password
+      @credits[:tokens] = proto.tokens
+    end
+
+    # TODO: move somewhere
+    def save_version!(message)
+      proto = message.proto_struct
+      return unless proto.is_a?(Murcure::Protos::Version)
+      
+      @version[:version] = proto.version
+      @version[:release] = proto.release
+      @version[:os] = proto.os
+      @version[:os_version] = proto.os_version
     end
 
     def receive : Murcure::Message
@@ -17,8 +41,6 @@ module Murcure
       proto = Murcure::ProtosHandler.find_struct(stack[:type])
       type = Murcure::ProtosHandler.find_type(stack[:type])
       
-      puts stack.inspect
-
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
@@ -29,17 +51,6 @@ module Murcure
       type_num = Murcure::ProtosHandler.find_type_number(type)
       proto_resp = Murcure::MessageBuilder.new(type).call(message)
       send_bytes(type_num, proto_resp)
-    end
-
-    def save_version!(message)
-      proto = message.proto_struct
-      hash = {
-        version: proto.version,
-        release: proto.release,
-        os: proto.os,
-        os_version: proto.os_version
-      }
-      @version.merge!(hash)
     end
 
     private def send_bytes(type_num : Int, message_bytes : Bytes)

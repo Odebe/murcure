@@ -23,9 +23,9 @@ module Murcure
     def handle_messages_from_server
       loop do
         message = @client_channel.receive
-        puts "\nreceived from main channel in #{message.uuid}:\n#{message.inspect}\n"
+        # puts "\nreceived from main channel in #{message.uuid}:\n#{message.inspect}\n"
         if message.type == :ping
-          send_to_client :ping, ping_message(message)
+          send_to_client :ping, ping_message
           next
         end
 
@@ -38,14 +38,14 @@ module Murcure
 
       loop do
         message = @client.receive   
-        puts "received from client socket: #{message.inspect}"
+        # puts "received from client socket: #{message.inspect}"
         @server_channel.send(message)
       end
     end
 
     ## MESSAGES
 
-    def ping_message(message : Murcure::Message) : Hash
+    def ping_message : Hash
       { "timestamp" => 9978166 }
     end
 
