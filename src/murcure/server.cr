@@ -6,7 +6,8 @@ module Murcure
       @server = TCPServer.new("localhost", port)
       @context = setup_context
       @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
-      @clients = [] of NamedTuple(uuid: UUID, client: Murcure::Client, handler: Murcure::ClientHandler, room: Int16)
+      @clients = Murcure::ClientStorage.new
+      @message_handler = Murcure::MessageHandler.new(@clients)
     end
 
     def run!
@@ -14,23 +15,9 @@ module Murcure
 
       loop do
         message = @server_channel.receive
-        puts "\nreceived from #{message.uuid} in main channel:\n#{message.inspect}\n"
-        handle_message(message)
+        # puts "\nreceived from #{message.uuid} in main channel:\n#{message.inspect}\n"
+        spawn @message_handler.call(message)
       end
-    end
-
-    private def handle_message(message : Murcure::Message)
-      spawn Murcure::MessageHandler.new(@clients).call(message)
-      # sender_uuid = message.uuid
-      # sender = @clients.find { |c| c[:uuid] == sender_uuid }
-      # if sender
-      #   # puts "sender: #{sender.inspect}"
-      #   Murcure::MessageHandler.new(@clients).call(message)
-      #   # puts "\nsending back to #{sender[:uuid]}, message:\n#{message.inspect}\n"
-      #   # sender[:handler].client_channel.send(message)
-      # else
-      #   next
-      # end
     end
 
     private def start_new_clients_handling
@@ -38,11 +25,10 @@ module Murcure
         loop do
           if client_socket = @server.accept?
             uuid = UUID.random
-            client = Murcure::Client.new(uuid, client_socket, @context)
+            client = Murcure::ClientSocket.new(uuid, client_socket, @context)
             handler = Murcure::ClientHandler.new(client, @server_channel)
-            
-            @clients << { uuid: uuid, client: client, handler: handler, room: 0_i16 }
-
+            @clients.add_client(uuid, handler)
+            @clients.update_attr(uuid, :room_id, 0_i32)
             spawn handler.call
           end
         end 
