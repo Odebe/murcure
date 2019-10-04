@@ -1,13 +1,17 @@
 module Murcure
   class Server
     @context : OpenSSL::SSL::Context::Server
+    @rooms : Murcure::RoomStorage
 
     def initialize(port : Int32)
       @server = TCPServer.new("localhost", port)
       @context = setup_context
       @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
+      
       @clients = Murcure::ClientStorage.new
-      @message_handler = Murcure::MessageHandler.new(@clients)
+      @rooms = setup_rooms
+      
+      @message_handler = Murcure::MessageHandler.new(@clients, @rooms)
     end
 
     def run!
@@ -21,6 +25,12 @@ module Murcure
       end
     end
 
+    private def setup_rooms
+      rooms = Murcure::RoomStorage.new
+      rooms.setup!
+      rooms
+    end
+
     private def start_new_clients_handling
       spawn do
         loop do
@@ -28,8 +38,11 @@ module Murcure
             uuid = UUID.random
             client = Murcure::ClientSocket.new(uuid, client_socket, @context)
             handler = Murcure::ClientHandler.new(client, @server_channel)
+
             @clients.add_client(uuid, handler)
-            @clients.update_attr(uuid, :room_id, 0_i32)
+            # @clients.update_attr(uuid, :room_id, 0_u32)
+            @rooms.add_client(0_u32, uuid)
+
             spawn handler.call
           end
         end 

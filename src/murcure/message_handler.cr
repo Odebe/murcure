@@ -2,14 +2,16 @@ module Murcure
   class MessageHandler
     
     @clients_storage : Murcure::ClientStorage
-    
-    def initialize(@clients_storage); end
+    @rooms_storage : Murcure::RoomStorage
+
+    def initialize(@clients_storage, @rooms_storage); end
 
     def call(message : Murcure::Message)
       sender = @clients_storage.get_client(message.uuid)
       return if sender.nil?
 
       puts sender[:attrs].inspect
+      puts @rooms_storage.inspect
       
       case message.type
       when :ping
