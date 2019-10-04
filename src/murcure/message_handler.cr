@@ -29,6 +29,9 @@ module Murcure
     private def process_version(message : Murcure::Message)
       proto = message.proto_struct
       return unless proto.is_a?(Murcure::Protos::Version)
+
+      client = @clients_storage.get_client(message.uuid)
+      return unless client[:machine].state == :need_auth
       
       @clients_storage.update_attr(message.uuid, :version, proto.version)
       @clients_storage.update_attr(message.uuid, :release, proto.release)
@@ -39,10 +42,15 @@ module Murcure
     private def process_auth(message : Murcure::Message)
       proto = message.proto_struct
       return unless proto.is_a?(Murcure::Protos::Authenticate)
+
+      client = @clients_storage.get_client(message.uuid)
+      return unless client[:machine].state == :need_auth
       
       @clients_storage.update_attr(message.uuid, :username, proto.username)
       @clients_storage.update_attr(message.uuid, :password, proto.password)
       @clients_storage.update_attr(message.uuid, :tokens, proto.tokens)
+
+      client[:machine].fire(:authenticate)
     end
 
     private def process_ping(message : Murcure::Message)

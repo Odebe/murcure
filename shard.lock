@@ -1,5 +1,9 @@
 version: 1.0
 shards:
+  aasm:
+    github: veelenga/aasm.cr
+    version: 0.1.1
+
   bindata:
     github: spider-gazelle/bindata
     version: 1.1.1

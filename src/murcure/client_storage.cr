@@ -1,11 +1,11 @@
 module Murcure
   class ClientStorage
     def initialize
-      @clients = {} of UUID => NamedTuple(handler: Murcure::ClientHandler, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String))))
+      @clients = {} of UUID => NamedTuple(handler: Murcure::ClientHandler, state: Murcure::ClientState, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String))))
     end
 
-    def add_client(uuid : UUID, handler : Murcure::ClientHandler) : Bool
-      @clients[uuid] = { handler: handler, attrs: {} of Symbol => (String | Int32 | UInt32 | Symbol | Nil | Array(String))}
+    def add_client(uuid : UUID, handler : Murcure::ClientHandler, machine: Murcure::ClientState) : Bool
+      @clients[uuid] = { handler: handler, state: machine, attrs: {} of Symbol => (String | Int32 | UInt32 | Symbol | Nil | Array(String))}
       true
     end
 

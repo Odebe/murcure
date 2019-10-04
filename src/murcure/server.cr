@@ -38,8 +38,9 @@ module Murcure
             uuid = UUID.random
             client = Murcure::ClientSocket.new(uuid, client_socket, @context)
             handler = Murcure::ClientHandler.new(client, @server_channel)
+            machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
 
-            @clients.add_client(uuid, handler)
+            @clients.add_client(uuid, handler, machine)
             # @clients.update_attr(uuid, :room_id, 0_u32)
             @rooms.add_client(0_u32, uuid)
 
