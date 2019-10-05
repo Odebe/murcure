@@ -2,6 +2,7 @@ require "socket"
 require "openssl"
 require "bindata"
 require "uuid"
+require "aasm"
 
 require "./murcure/*"
 # require "./murcure/message_decorators/*"

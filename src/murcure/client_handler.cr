@@ -23,11 +23,23 @@ module Murcure
     def handle_messages_from_server
       loop do
         message = @client_channel.receive
-        # puts "\nreceived from main channel in #{message.uuid}:\n#{message.inspect}\n"
-        if message.type == :ping
-          send_to_client :ping, ping_message
-          next
+        case message.type
+        when :proto
+          case message.subtype.not_nil!
+          when :ping
+            send_to_client :ping, ping_message
+          end
+        when :cmd
+          case message.subtype.not_nil!
+          when :channel_state
+            hash = channel_state(message)
+            next if hash.nil?
+
+            send_to_client :channel_state, hash
+          end
+          # TODO
         end
+        # puts "\nreceived from main channel in #{message.uuid}:\n#{message.inspect}\n"
 
       end
     end
@@ -44,6 +56,31 @@ module Murcure
     end
 
     ## MESSAGES
+
+    # struct ChannelState
+    #   include Protobuf::Message
+      
+    #   contract_of "proto2" do
+    #     optional :channel_id, :uint32, 1
+    #     optional :parent, :uint32, 2
+    #     optional :name, :string, 3
+    #     repeated :links, :uint32, 4
+    #     optional :description, :string, 5
+    #     repeated :links_add, :uint32, 6
+    #     repeated :links_remove, :uint32, 7
+    #     optional :temporary, :bool, 8, default: false
+    #     optional :position, :int32, 9, default: 0
+    #     optional :description_hash, :bytes, 10
+    #     optional :max_users, :uint32, 11
+    #   end
+    # end
+
+    def channel_state(message : Murcure::Message) : (Hash(String, (String | UInt32 )) | Nil)
+      room_struct = message.data
+      return unless room_struct.is_a?(Murcure::RoomStruct)
+
+      { "channel_id" => room_struct.id, "name" => room_struct.name }
+    end
 
     def ping_message : Hash
       { "timestamp" => 9978166 }

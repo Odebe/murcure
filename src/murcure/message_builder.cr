@@ -17,16 +17,25 @@ module Murcure
       case type
       when :ping
         process_ping_message(data)
+      when :channel_state
+        process_channel_state_message(data)
       else
         raise "not defined message"
       end
     end
 
+    def process_channel_state_message(data)
+      Murcure::Protos::ChannelState.new.tap do |m|
+        puts data.inspect
+        m.channel_id = data["channel_id"].to_u32
+        m.name = data["name"].to_s
+      end
+    end
+
     def process_ping_message(data)
-      m = Murcure::Protos::Ping.new
-      m.timestamp = data["timestamp"].to_u64
-      # puts "message: #{m}"
-      m
+      Murcure::Protos::Ping.new.tap do |m|
+        m.timestamp = data["timestamp"].to_u64
+      end
       # m.good = 1
       # m.late = 1
       # m.lost = 0

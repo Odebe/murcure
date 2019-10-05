@@ -17,3 +17,5 @@ dependencies:
     github: jeromegn/protobuf.cr
   bindata:
     github: spider-gazelle/bindata
+  aasm:
+    github: veelenga/aasm.cr

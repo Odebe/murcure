@@ -6,6 +6,7 @@ module Murcure
       0 => Murcure::Protos::Version,
       2 => Murcure::Protos::Authenticate,
       3 => Murcure::Protos::Ping,
+      7 => Murcure::Protos::ChannelState,
       9 => Murcure::Protos::UserState,
     }
 
@@ -13,6 +14,7 @@ module Murcure
       0 => :version,
       2 => :auth,
       3 => :ping,
+      7 => :channel_state,
       9 => :user_state,
     }
 
@@ -25,12 +27,7 @@ module Murcure
     end
 
     def find_type_number(type : Symbol) : Int
-      number = MESSAGE_TYPES.find { |k, v| v == type }
-      if number.is_a?(Nil)
-        raise "can not found type"
-      else
-        number.first
-      end
+      number = MESSAGE_TYPES.find { |k, v| v == type }.not_nil!.first
     end
   end
 end
