@@ -44,7 +44,7 @@ module Murcure
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
-      Murcure::Message.new(message, type, @uuid)
+      Murcure::Message.new(:proto, type, message, nil, @uuid)
     end
 
     def send(type : Symbol, message : Hash)

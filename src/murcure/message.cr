@@ -1,15 +1,12 @@
 module Murcure
-  class Message
-    @proto_struct : Protobuf::Message
-
-    getter proto_struct : Protobuf::Message
+  struct Message
     getter type : Symbol
-    getter uuid : UUID
+    getter subtype : Symbol
+    getter uuid : UUID | Nil
+    getter proto_struct : (Protobuf::Message | Nil)
+    getter data : (Murcure::RoomStruct | Nil) # Murcure::ClientStruct 
 
-    def initialize(proto_struct, type, uuid)
-      @proto_struct = proto_struct
-      @type = type
-      @uuid = uuid
+    def initialize(@type, @subtype, @proto_struct, @data, @uuid)
     end
   end
 end

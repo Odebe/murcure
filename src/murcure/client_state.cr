@@ -7,28 +7,32 @@ module Murcure
     end
 
     def has_auth?
-      @operations.include?(:add_auth)
+      @operations.includes?(:add_auth)
     end
 
     def has_version?
-      @operations.include?(:add_version)
+      @operations.includes?(:add_version)
     end
 
     def channels_sent?
-      @operations.include?(:channels_sent)
+      @operations.includes?(:channels_sent)
     end
 
     def users_sent?
-      @operations.include?(:users_sent)
+      @operations.includes?(:users_sent)
     end
 
     def synchonized?
       channels_sent? && users_sent?
     end
 
+    def auth_ended?
+      has_auth? && has_version?
+    end
+
     def act_as_state_machine
       aasm.state :connected, initial: true
-      aasm.state :sync, guard: -> { has_auth? && has_version? }
+      aasm.state :sync, guard: -> { auth_ended? }
       
       aasm.event :add_version do |e|
         e.before { @operations << :add_version }
