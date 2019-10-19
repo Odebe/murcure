@@ -19,13 +19,15 @@ module Murcure
     def handle_messages_from_server
       loop do
         message = @client_channel.receive
+        puts "handle_messages_from_server: #{message.inspect}"
         @client.send(message)
       end
     end
 
     def handle_messages_from_client
       loop do
-        message = @client.receive   
+        message = @client.receive
+        # puts "handle_messages_from_client: #{message.inspect}" 
         @server_channel.send(message)
       end
     end

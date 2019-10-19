@@ -2,7 +2,10 @@ module Murcure
   class ClientState
     include AASM
 
+    getter operations : Array(Symbol)
+
     def initialize
+      @mutex = Mutex.new
       @operations = [] of Symbol
     end
 
@@ -22,8 +25,12 @@ module Murcure
       @operations.includes?(:users_sent)
     end
 
+    def server_sync_sent?
+      @operations.includes?(:server_sync_sent)
+    end
+
     def synchonized?
-      channels_sent? && users_sent?
+      channels_sent? && users_sent? && server_sync_sent?
     end
 
     def auth_ended?
@@ -31,28 +38,35 @@ module Murcure
     end
 
     def act_as_state_machine
+      @operations = [] of Symbol
+
       aasm.state :connected, initial: true
       aasm.state :sync, guard: -> { auth_ended? }
       
       aasm.event :add_version do |e|
-        e.before { @operations << :add_version }
+        e.before { @mutex.synchronize { @operations << :add_version } }
         e.transitions from: :connected, to: :sync
       end
 
       aasm.event :add_auth do |e|
-        e.before { @operations << :add_auth }
+        e.before { @mutex.synchronize { @operations << :add_auth } }
         e.transitions from: :connected, to: :sync
       end
 
       aasm.state :active, guard: -> { synchonized? }
 
       aasm.event :channels_sent do |e|
-        e.before { @operations << :channels_sent }
+        e.before { @mutex.synchronize  { @operations << :channels_sent } }
         e.transitions from: :sync, to: :active
       end
 
       aasm.event :users_sent do |e|
-        e.before { @operations << :users_sent }
+        e.before { @mutex.synchronize  { @operations << :users_sent } }
+        e.transitions from: :sync, to: :active
+      end
+
+      aasm.event :server_sync_sent do |e|
+        e.before { @mutex.synchronize  { @operations << :server_sync_sent } }
         e.transitions from: :sync, to: :active
       end
 
