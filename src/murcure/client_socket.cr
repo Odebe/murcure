@@ -35,22 +35,30 @@ module Murcure
     #   @version[:os_version] = proto.os_version
     # end
 
-    def receive : Murcure::Message
+    def receive : Murcure::Messages::Input
       stack = receive_stack
       
-      proto = Murcure::ProtosHandler.find_struct(stack[:type])
-      type = Murcure::ProtosHandler.find_type(stack[:type])
-      
+      type = Murcure::ProtosHandler.find_type(stack[:type])      
+      proto = Murcure::ProtosHandler.find_struct(stack[:type])      
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
-      Murcure::Message.new(:proto, type, message, nil, @uuid)
+      Murcure::Messages::Input.new(type, message, @uuid)
     end
 
-    def send(type : Symbol, message : Hash)
-      type_num = Murcure::ProtosHandler.find_type_number(type)
-      proto_resp = Murcure::MessageBuilder.new(type).call(message)
-      send_bytes(type_num, proto_resp)
+    def send(message : Murcure::Messages::Base) : Nil
+      type_num = Murcure::ProtosHandler.find_type_number(message.type)
+      msg_bytes = convert_proto_tp_bytes(message)
+      send_bytes(type_num, msg_bytes)
+      nil
+    end
+
+    private def convert_proto_tp_bytes(message : Murcure::Messages::Base) : Bytes
+      message_memory = message.proto.to_protobuf
+      message_memory.rewind
+      bytes = Bytes.new(message_memory.bytesize)
+      message_memory.read(bytes)
+      bytes
     end
 
     private def send_bytes(type_num : Int, message_bytes : Bytes)
@@ -60,7 +68,6 @@ module Murcure
       type_bytes = Bytes.new(2) 
       memory.read(type_bytes)
       @ssl_socket.unbuffered_write(type_bytes)
-      # puts "type_bytes: #{type_bytes}"
 
       memory = IO::Memory.new
       message_bytes.bytesize.to_u32.to_io(memory, IO::ByteFormat::NetworkEndian)
@@ -68,10 +75,6 @@ module Murcure
       bytesize_bytes = Bytes.new(4) 
       memory.read(bytesize_bytes)
       @ssl_socket.unbuffered_write(bytesize_bytes)
-      # puts "type_bytes: #{bytesize_bytes}"
-
-      @ssl_socket.unbuffered_write(message_bytes)
-      # puts "type_bytes: #{message_bytes}"
     end
 
     private def receive_stack

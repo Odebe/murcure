@@ -6,8 +6,8 @@ module Murcure
 
     def initialize(@clients_storage, @rooms_storage); end
 
-    def call(message : Murcure::Message)
-      process_ping(message) && return if message.subtype == :ping 
+    def call(message : Murcure::Messages::Base)
+      process_ping(message) && return if message.type == :ping 
 
       sender = @clients_storage.get_client(message.uuid)
       return if sender.nil? # TODO: raise error
@@ -39,13 +39,22 @@ module Murcure
     private def send_channels_state(message, sender)
       client_channel = @clients_storage.channel(message.uuid).not_nil!
       @rooms_storage.rooms.values.each do |room|
-        message = Murcure::Message.new(:cmd, :channel_state, nil, room, nil)
+        proto_m = Murcure::MessageBuilder.new.process_channel_state_message(room)
+        message = Murcure::Messages::Output.new(:channel_state, proto_m, message.uuid)        
         client_channel.send(message)
       end
     end
 
-    private def process_version(message : Murcure::Message)
-      proto = message.proto_struct
+    private def process_ping(message : Murcure::Messages::Base)
+      puts message.inspect
+      proto_m = Murcure::MessageBuilder.new.process_ping_message
+      message = Murcure::Messages::Output.new(:ping, proto_m, message.uuid)        
+      client_channel = @clients_storage.channel(message.uuid).not_nil!      
+      client_channel.send(message)
+    end
+
+    private def process_version(message : Murcure::Messages::Base)
+      proto = message
       return unless proto.is_a?(Murcure::Protos::Version)
 
       client = @clients_storage.get_client(message.uuid)
@@ -59,8 +68,8 @@ module Murcure
       client[:machine].fire(:add_version)
     end
 
-    private def process_auth(message : Murcure::Message)
-      proto = message.proto_struct
+    private def process_auth(message : Murcure::Messages::Base)
+      proto = message.proto
       return unless proto.is_a?(Murcure::Protos::Authenticate)
 
       client = @clients_storage.get_client(message.uuid)
@@ -71,10 +80,6 @@ module Murcure
       @clients_storage.update_attr(message.uuid, :tokens, proto.tokens)
 
       client[:machine].fire(:add_auth)
-    end
-
-    private def process_ping(message : Murcure::Message)
-      @clients_storage.channel(message.uuid).send(message)
     end
   end
 end

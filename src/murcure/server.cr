@@ -6,7 +6,7 @@ module Murcure
     def initialize(port : Int32)
       @server = TCPServer.new("localhost", port)
       @context = setup_context
-      @server_channel = Channel(Murcure::Message).new # messages from clients to server/other clients
+      @server_channel = Channel(Murcure::Messages::Base).new # messages from clients to server/other clients
       
       @clients = Murcure::ClientStorage.new
       @rooms = setup_rooms

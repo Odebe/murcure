@@ -5,6 +5,8 @@ require "uuid"
 require "aasm"
 
 require "./murcure/*"
+require "./murcure/messages/*"
+
 # require "./murcure/message_decorators/*"
 
 # TODO: Write documentation for `Murcure`
