@@ -1,7 +1,6 @@
 require "socket"
 require "openssl"
 require "bindata"
-require "uuid"
 require "aasm"
 
 require "./murcure/*"
