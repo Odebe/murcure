@@ -36,9 +36,9 @@ module Murcure
     end
 
     def process_ping_message
-      Murcure::Protos::Ping.new.tap do |m|
-        m.timestamp = Time.now.hash.to_u64
-      end
+      m = Murcure::Protos::Ping.new
+      m.timestamp = 123123
+      m
     end
   end
 end

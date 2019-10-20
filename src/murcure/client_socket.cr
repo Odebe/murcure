@@ -49,6 +49,7 @@ module Murcure
     def send(message : Murcure::Messages::Base) : Nil
       type_num = Murcure::ProtosHandler.find_type_number(message.type)
       msg_bytes = convert_proto_tp_bytes(message)
+      puts "type: #{type_num}, bytes: #{msg_bytes}"
       send_bytes(type_num, msg_bytes)
       nil
     end
@@ -75,6 +76,8 @@ module Murcure
       bytesize_bytes = Bytes.new(4) 
       memory.read(bytesize_bytes)
       @ssl_socket.unbuffered_write(bytesize_bytes)
+
+      @ssl_socket.unbuffered_write(message_bytes)
     end
 
     private def receive_stack

@@ -46,15 +46,14 @@ module Murcure
     end
 
     private def process_ping(message : Murcure::Messages::Base)
-      puts message.inspect
       proto_m = Murcure::MessageBuilder.new.process_ping_message
-      message = Murcure::Messages::Output.new(:ping, proto_m, message.uuid)        
+      message = Murcure::Messages::Output.new(:ping, proto_m, message.uuid)
       client_channel = @clients_storage.channel(message.uuid).not_nil!      
       client_channel.send(message)
     end
 
     private def process_version(message : Murcure::Messages::Base)
-      proto = message
+      proto = message.proto
       return unless proto.is_a?(Murcure::Protos::Version)
 
       client = @clients_storage.get_client(message.uuid)
