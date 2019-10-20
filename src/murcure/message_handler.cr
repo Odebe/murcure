@@ -8,18 +8,12 @@ module Murcure
 
     def call(message : Murcure::Messages::Base)
       process_ping(message) && return if message.type == :ping 
-
-      sender = @clients_storage.get_client(message.session_id)
-      return if sender.nil? # TODO: raise error
-
-      puts sender[:attrs].inspect
-      puts @rooms_storage.inspect
-
-      process_by_state(sender, message)
+      process_by_state(message)
     end
 
-    private def process_by_state(sender, message)
-      case sender[:machine].state
+    private def process_by_state(message)
+      sender = @clients_storage.get_client(message.session_id).not_nil! 
+      case sender.machine.state
       when :connected
         case message.type
         when :version
@@ -27,7 +21,7 @@ module Murcure
         when :auth
           process_auth(message)
         end
-        process_by_state(sender, message) if sender[:machine].auth_ended?
+        process_by_state(message) if sender.machine.auth_ended?
       when :sync
         send_channels_state(message)
         send_users_state(message)
@@ -44,7 +38,7 @@ module Murcure
       message = Murcure::Messages::Output.new(:server_sync, proto_m, message.session_id)
       
       client_channel.send(message)
-      client[:machine].fire(:add_version)
+      client.machine.fire(:add_version)
     end
 
     private def send_users_state(message)
@@ -84,7 +78,7 @@ module Murcure
       @clients_storage.update_attr(message.session_id, :os, proto.os)
       @clients_storage.update_attr(message.session_id, :os_version, proto.os_version)
       
-      client[:machine].fire(:add_version)
+      client.machine.fire(:add_version)
     end
 
     private def process_auth(message : Murcure::Messages::Base)
@@ -98,7 +92,7 @@ module Murcure
       @clients_storage.update_attr(message.session_id, :password, proto.password)
       @clients_storage.update_attr(message.session_id, :tokens, proto.tokens)
 
-      client[:machine].fire(:add_auth)
+      client.machine.fire(:add_auth)
     end
   end
 end

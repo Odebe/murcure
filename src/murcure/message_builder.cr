@@ -44,10 +44,10 @@ module Murcure
     #   optional :recording, :bool, 19
     # end
     # TODO: struct to users
-    def process_user_state_message(user : NamedTuple(session_id: UInt32, handler: Murcure::ClientHandler, machine: Murcure::ClientState, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String)))))
+    def process_user_state_message(user : Murcure::ClientStruct)
       m = Murcure::Protos::UserState.new
-      m.session = user[:session_id].to_u32
-      m.name = user[:attrs][:username].to_s
+      m.session = user.session_id.to_u32
+      m.name = user.attrs[:username].to_s
       m.channel_id = 0_u32
       m
     end
@@ -60,7 +60,7 @@ module Murcure
     # end
     def process_server_sync_message(user)
       m = Murcure::Protos::ServerSync.new
-      m.session = user[:session_id].to_u32
+      m.session = user.session_id.to_u32
       m.welcome_text = "Welcome to VoIP страну"
       m
     end
