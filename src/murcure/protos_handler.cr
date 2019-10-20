@@ -6,6 +6,7 @@ module Murcure
       0 => Murcure::Protos::Version,
       2 => Murcure::Protos::Authenticate,
       3 => Murcure::Protos::Ping,
+      5 => Murcure::Protos::ServerSync,
       7 => Murcure::Protos::ChannelState,
       9 => Murcure::Protos::UserState,
     }
@@ -14,6 +15,7 @@ module Murcure
       0 => :version,
       2 => :auth,
       3 => :ping,
+      5 => :server_sync,
       7 => :channel_state,
       9 => :user_state,
     }

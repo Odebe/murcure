@@ -31,9 +31,20 @@ module Murcure
       when :sync
         send_channels_state(message)
         send_users_state(message)
+        send_server_sync(message)
       when :active
         # TODO
       end
+    end
+
+    private def send_server_sync(message)
+      client_channel = @clients_storage.channel(message.session_id).not_nil!
+      client = @clients_storage.get_client(message.session_id).not_nil!
+      proto_m = Murcure::MessageBuilder.new.process_server_sync_message(client)
+      message = Murcure::Messages::Output.new(:server_sync, proto_m, message.session_id)
+      
+      client_channel.send(message)
+      client[:machine].fire(:add_version)
     end
 
     private def send_users_state(message)

@@ -22,8 +22,12 @@ module Murcure
       @operations.includes?(:users_sent)
     end
 
+    def sync_sent?
+      @operations.includes?(:sync_sent)
+    end
+
     def synchonized?
-      channels_sent? && users_sent?
+      channels_sent? && users_sent? && sync_sent?
     end
 
     def auth_ended?
@@ -53,6 +57,11 @@ module Murcure
 
       aasm.event :users_sent do |e|
         e.before { @operations << :users_sent }
+        e.transitions from: :sync, to: :active
+      end
+
+      aasm.event :sync_sent do |e|
+        e.before { @operations << :sync_sent }
         e.transitions from: :sync, to: :active
       end
 
