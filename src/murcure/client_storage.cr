@@ -1,31 +1,35 @@
 module Murcure
   class ClientStorage
     def initialize
-      @clients = {} of UUID => NamedTuple(handler: Murcure::ClientHandler, machine: Murcure::ClientState, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String))))
+      @clients = {} of UInt32 => NamedTuple(session_id: UInt32, handler: Murcure::ClientHandler, machine: Murcure::ClientState, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String))))
     end
 
-    def add_client(uuid : UUID, handler : Murcure::ClientHandler, machine : Murcure::ClientState) : Bool
-      @clients[uuid] = { handler: handler, machine: machine, attrs: {} of Symbol => (String | Int32 | UInt32 | Symbol | Nil | Array(String))}
+    def add_client(session_id : UInt32, handler : Murcure::ClientHandler, machine : Murcure::ClientState) : Bool
+      @clients[session_id] = { session_id: session_id, handler: handler, machine: machine, attrs: {} of Symbol => (String | Int32 | UInt32 | Symbol | Nil | Array(String))}
       true
     end
 
-    def channel(uuid : (UUID | Nil))
-      raise "uuid cannot be bil" if uuid.nil?
+    def channel(session_id : (UInt32 | Nil))
+      raise "session_id cannot be bil" if session_id.nil?
 
-      @clients[uuid.not_nil!][:handler].client_channel
+      @clients[session_id.not_nil!][:handler].client_channel
     end
 
-    def get_client(uuid : (UUID | Nil))
-      raise "uuid cannot be bil" if uuid.nil?
-
-      client = @clients[uuid.not_nil!]
-      client || raise "can not find client with uuid='#{uuid.not_nil!}'"
+    def clients
+      @clients.values
     end
 
-    def update_attr(uuid : (UUID | Nil), attr_name : Symbol, attr_value : (String | Int32 | UInt32 | Symbol | Nil | Array(String))) : Bool
-      return false if uuid.nil?
+    def get_client(session_id : (UInt32 | Nil))
+      raise "session_id cannot be bil" if session_id.nil?
 
-      client = @clients[uuid.not_nil!]
+      client = @clients[session_id.not_nil!]
+      client || raise "can not find client with session_id='#{session_id.not_nil!}'"
+    end
+
+    def update_attr(session_id : (UInt32 | Nil), attr_name : Symbol, attr_value : (String | Int32 | UInt32 | Symbol | Nil | Array(String))) : Bool
+      return false if session_id.nil?
+
+      client = @clients[session_id.not_nil!]
       return false unless client
 
       client[:attrs][attr_name] = attr_value

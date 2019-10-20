@@ -3,7 +3,7 @@ module Murcure
     getter id : UInt32
     getter parent_id : UInt32
     getter name : String
-    getter clients : Array(UUID)
+    getter clients : Array(UInt32)
 
     def initialize(@id, @parent_id, @name, @clients)
     end

@@ -4,11 +4,11 @@ module Murcure
     # @version : Hash(Symbol, (String | UInt32 | Nil))
     # @credits : Hash(Symbol, (String | UInt32 | Nil | Array(String)))
 
-    getter uuid : UUID
+    getter session_id : UInt32
     # getter version
     # getter credits
 
-    def initialize(@uuid : UUID, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
+    def initialize(@session_id : UInt32, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
       @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
       # @version = {} of Symbol => (String | UInt32 | Nil)
       # @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
@@ -43,12 +43,13 @@ module Murcure
       memory = IO::Memory.new(stack[:payload])
       message = proto.from_protobuf(memory)
       
-      Murcure::Messages::Input.new(type, message, @uuid)
+      Murcure::Messages::Input.new(type, message, @session_id)
     end
 
     def send(message : Murcure::Messages::Base) : Nil
       type_num = Murcure::ProtosHandler.find_type_number(message.type)
       msg_bytes = convert_proto_tp_bytes(message)
+      puts "type: #{type_num}, bytes: #{msg_bytes}"
       send_bytes(type_num, msg_bytes)
       nil
     end
@@ -75,6 +76,8 @@ module Murcure
       bytesize_bytes = Bytes.new(4) 
       memory.read(bytesize_bytes)
       @ssl_socket.unbuffered_write(bytesize_bytes)
+
+      @ssl_socket.unbuffered_write(message_bytes)
     end
 
     private def receive_stack

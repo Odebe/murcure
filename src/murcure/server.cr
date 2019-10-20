@@ -20,7 +20,7 @@ module Murcure
 
       loop do
         message = @server_channel.receive
-        # puts "\nreceived from #{message.uuid} in main channel:\n#{message.inspect}\n"
+        # puts "\nreceived from #{message.session_id} in main channel:\n#{message.inspect}\n"
         spawn @message_handler.call(message)
       end
     end
@@ -35,14 +35,14 @@ module Murcure
       spawn do
         loop do
           if client_socket = @server.accept?
-            uuid = UUID.random
-            client = Murcure::ClientSocket.new(uuid, client_socket, @context)
+            session_id = Random.rand(UInt32::MIN..UInt32::MAX)
+            client = Murcure::ClientSocket.new(session_id, client_socket, @context)
             handler = Murcure::ClientHandler.new(client, @server_channel)
             machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
 
-            @clients.add_client(uuid, handler, machine)
-            # @clients.update_attr(uuid, :room_id, 0_u32)
-            @rooms.add_client(0_u32, uuid)
+            @clients.add_client(session_id, handler, machine)
+            # @clients.update_attr(session_id, :room_id, 0_u32)
+            @rooms.add_client(0_u32, session_id)
 
             spawn handler.call
           end
