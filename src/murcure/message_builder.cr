@@ -52,6 +52,19 @@ module Murcure
       m
     end
 
+    # contract_of "proto2" do
+    #   optional :session, :uint32, 1
+    #   optional :max_bandwidth, :uint32, 2
+    #   optional :welcome_text, :string, 3
+    #   optional :permissions, :uint64, 4
+    # end
+    def process_server_sync_message(user)
+      m = Murcure::Protos::ServerSync.new
+      m.session = user[:session_id].to_u32
+      m.welcome_text = "Welcome to VoIP страну"
+      m
+    end
+
     def process_ping_message
       m = Murcure::Protos::Ping.new
       m.timestamp = 123123
