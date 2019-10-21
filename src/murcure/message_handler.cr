@@ -18,16 +18,42 @@ module Murcure
         case message.type
         when :version
           process_version(message)
+          sender.machine.fire(:add_version)     
         when :auth
           process_auth(message)
+          sender.machine.fire(:add_auth)
         end
+
         process_by_state(message) if sender.machine.auth_ended?
       when :sync
         send_channels_state(message)
         send_users_state(message)
         send_server_sync(message)
+
+        sender.machine.fire(:activate)
       when :active
+        process_active_messages(message)
         # TODO
+      end
+    end
+
+    private def process_active_messages(message)
+      case message.type
+      when :text_message
+        send_text_message(message)
+      end
+    end
+
+    private def send_text_message(message)
+      proto_in = message.proto 
+      return unless proto_in.is_a?(Murcure::Protos::TextMessage)
+
+      # proto_m = Murcure::MessageBuilder.new.process_text_message(message, proto)
+      message = Murcure::Messages::Output.new(:text_message, proto_in, message.session_id)        
+
+      @clients_storage.clients.each do |client|
+        client_channel = @clients_storage.channel(client.session_id).not_nil!       
+        client_channel.send(message)
       end
     end
 
@@ -70,29 +96,19 @@ module Murcure
       proto = message.proto
       return unless proto.is_a?(Murcure::Protos::Version)
 
-      client = @clients_storage.get_client(message.session_id)
-      return if client.nil?
-      
       @clients_storage.update_attr(message.session_id, :version, proto.version)
       @clients_storage.update_attr(message.session_id, :release, proto.release)
       @clients_storage.update_attr(message.session_id, :os, proto.os)
       @clients_storage.update_attr(message.session_id, :os_version, proto.os_version)
-      
-      client.machine.fire(:add_version)
     end
 
     private def process_auth(message : Murcure::Messages::Base)
       proto = message.proto
       return unless proto.is_a?(Murcure::Protos::Authenticate)
-
-      client = @clients_storage.get_client(message.session_id)
-      return if client.nil?
       
       @clients_storage.update_attr(message.session_id, :username, proto.username)
       @clients_storage.update_attr(message.session_id, :password, proto.password)
       @clients_storage.update_attr(message.session_id, :tokens, proto.tokens)
-
-      client.machine.fire(:add_auth)
     end
   end
 end

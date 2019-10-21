@@ -52,6 +52,19 @@ module Murcure
       m
     end
 
+    # # contract_of "proto2" do
+    # #   optional :actor, :uint32, 1
+    # #   repeated :session, :uint32, 2
+    # #   repeated :channel_id, :uint32, 3
+    # #   repeated :tree_id, :uint32, 4
+    # #   required :message, :string, 5
+    # # end
+    # def process_text_message(message : Murcure::Messages::Base, proto : Murcure::Protos::TextMessage)
+    #   m = Murcure::Protos::TextMessage.new
+    #   m.session = message.session_id
+    #   m.channel_id
+    # end
+
     # contract_of "proto2" do
     #   optional :session, :uint32, 1
     #   optional :max_bandwidth, :uint32, 2
@@ -62,6 +75,7 @@ module Murcure
       m = Murcure::Protos::ServerSync.new
       m.session = user.session_id.to_u32
       m.welcome_text = "Welcome to VoIP страну"
+      m.permissions = 123123_u64
       m
     end
 

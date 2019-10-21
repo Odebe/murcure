@@ -8,8 +8,7 @@ module Murcure
 
     # TODO: get rooms from sqlite
     def setup! : Bool
-      @rooms[0_u32] = Murcure::RoomStruct.new(0_u32, 0_u32, "Root", [] of UInt32)
-      @rooms[1_u32] = Murcure::RoomStruct.new(1_u32, 0_u32, "wooh", [] of UInt32)
+      @rooms[0_u32] = Murcure::RoomStruct.new(0_u32, 0_u32, "root", [] of UInt32)
       true
     end
 

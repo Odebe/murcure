@@ -48,7 +48,10 @@ module Murcure
         e.transitions from: :connected, to: :sync
       end
 
-      aasm.state :active, guard: -> { synchonized? }
+      aasm.state :active
+      aasm.event :activate do |e|
+        e.transitions from: :sync, to: :active
+      end
 
       aasm.event :channels_sent do |e|
         e.before { @operations << :channels_sent }
