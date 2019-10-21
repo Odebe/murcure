@@ -34,16 +34,20 @@ module Murcure
     private def start_new_clients_handling
       spawn do
         loop do
-          if client_socket = @server.accept?
-            session_id = Random.rand(UInt32::MIN..UInt32::MAX)
-            client = Murcure::ClientSocket.new(session_id, client_socket, @context)
-            handler = Murcure::ClientHandler.new(client, @server_channel)
-            machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
+          begin
+            if client_socket = @server.accept?
+              session_id = Random.rand(UInt32::MIN..UInt32::MAX)
+              client = Murcure::ClientSocket.new(session_id, client_socket, @context)
+              handler = Murcure::ClientHandler.new(client, @server_channel)
+              machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
 
-            @clients.add_client(session_id, handler, machine)
-            @rooms.add_client(0_u32, session_id)
+              @clients.add_client(session_id, handler, machine)
+              @rooms.add_client(0_u32, session_id)
 
-            spawn handler.call
+              spawn handler.call
+            end
+          rescue => e
+            puts e.inspect
           end
         end 
       end
