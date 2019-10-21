@@ -29,6 +29,7 @@ module Murcure
         send_channels_state(message)
         send_users_state(message)
         send_server_sync(message)
+        send_notify_new_user(message)
 
         sender.machine.fire(:activate)
       when :active
@@ -44,14 +45,24 @@ module Murcure
       end
     end
 
+    private def send_notify_new_user(message)
+      client = @clients_storage.get_client(message.session_id).not_nil!
+      proto_m = Murcure::MessageBuilder.new.process_user_state_message(client)
+      message = Murcure::Messages::Output.new(:user_state, proto_m, message.session_id) 
+
+      @clients_storage.clients.reject { |c| c.session_id == message.session_id }.each do |another_client|
+        client_channel = @clients_storage.channel(another_client.session_id).not_nil!       
+        client_channel.send(message)
+      end
+    end
+
     private def send_text_message(message)
       proto_in = message.proto 
       return unless proto_in.is_a?(Murcure::Protos::TextMessage)
 
-      # proto_m = Murcure::MessageBuilder.new.process_text_message(message, proto)
       message = Murcure::Messages::Output.new(:text_message, proto_in, message.session_id)        
 
-      @clients_storage.clients.each do |client|
+      @clients_storage.clients.reject { |c| c.session_id == message.session_id }.each do |client|
         client_channel = @clients_storage.channel(client.session_id).not_nil!       
         client_channel.send(message)
       end

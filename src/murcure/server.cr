@@ -41,7 +41,6 @@ module Murcure
             machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
 
             @clients.add_client(session_id, handler, machine)
-            # @clients.update_attr(session_id, :room_id, 0_u32)
             @rooms.add_client(0_u32, session_id)
 
             spawn handler.call
