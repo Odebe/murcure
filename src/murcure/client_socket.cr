@@ -55,7 +55,7 @@ module Murcure
     end
 
     private def convert_proto_tp_bytes(message : Murcure::Messages::Base) : Bytes
-      message_memory = message.proto.to_protobuf
+      message_memory = message.proto.not_nil!.to_protobuf
       message_memory.rewind
       bytes = Bytes.new(message_memory.bytesize)
       message_memory.read(bytes)

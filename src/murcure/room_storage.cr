@@ -3,6 +3,7 @@ module Murcure
     getter rooms : Hash(UInt32, Murcure::RoomStruct)
 
     def initialize
+      @mutex = Mutex.new
       @rooms = {} of UInt32 => Murcure::RoomStruct      
     end
 
@@ -13,7 +14,7 @@ module Murcure
     end
 
     def add_client(room_id : UInt32, client_session_id : UInt32) : Bool
-      @rooms[room_id].clients << client_session_id
+      @mutex.synchronize { @rooms[room_id].clients << client_session_id }
       true
     end
 
