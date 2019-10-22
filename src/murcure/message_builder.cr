@@ -52,6 +52,23 @@ module Murcure
       m
     end
 
+    # struct UserRemove
+    #   include Protobuf::Message
+      
+    #   contract_of "proto2" do
+    #     required :session, :uint32, 1
+    #     optional :actor, :uint32, 2
+    #     optional :reason, :string, 3
+    #     optional :ban, :bool, 4
+    #   end
+    # end
+
+    def process_user_remove(user : Murcure::ClientStruct)
+      m = Murcure::Protos::UserRemove.new(user.session_id.to_u32)
+      # m.session = user.session_id.to_u32
+      m
+    end
+
     # # contract_of "proto2" do
     # #   optional :actor, :uint32, 1
     # #   repeated :session, :uint32, 2

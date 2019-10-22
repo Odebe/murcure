@@ -38,7 +38,7 @@ module Murcure
             if client_socket = @server.accept?
               session_id = Random.rand(UInt32::MIN..UInt32::MAX)
               client = Murcure::ClientSocket.new(session_id, client_socket, @context)
-              handler = Murcure::ClientHandler.new(client, @server_channel)
+              handler = Murcure::ClientHandler.new(session_id, client, @server_channel)
               machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
 
               @clients.add_client(session_id, handler, machine)
@@ -46,8 +46,8 @@ module Murcure
 
               spawn handler.call
             end
-          rescue => e
-            puts e.inspect
+          rescue
+            # puts e.inspect
           end
         end 
       end

@@ -7,7 +7,8 @@ module Murcure
     def initialize(@clients_storage, @rooms_storage); end
 
     def call(message : Murcure::Messages::Base)
-      process_ping(message) && return if message.type == :ping 
+      process_ping(message) && return if message.type == :ping
+      process_error(message) && return if message.is_a?(Murcure::Messages::Error)
       process_by_state(message)
     end
 
@@ -23,14 +24,12 @@ module Murcure
           process_auth(message)
           sender.machine.fire(:add_auth)
         end
-
         process_by_state(message) if sender.machine.auth_ended?
       when :sync
         send_channels_state(message)
         send_users_state(message)
         send_server_sync(message)
         send_notify_new_user(message)
-
         sender.machine.fire(:activate)
       when :active
         process_active_messages(message)
@@ -45,6 +44,21 @@ module Murcure
       end
     end
 
+    private def process_error(message : Murcure::Messages::Error)
+      case message.type
+      when :user_remove
+        client = @clients_storage.get_client(message.session_id).not_nil!
+        proto_m = Murcure::MessageBuilder.new.process_user_remove(client)
+        new_message = Murcure::Messages::Output.new(:user_remove, proto_m, message.session_id) 
+
+        @clients_storage.delete_client(message.session_id)        
+        @clients_storage.clients.each do |another_client|
+          client_channel = @clients_storage.channel(another_client.session_id).not_nil!       
+          client_channel.send(new_message)
+        end
+      end
+    end
+5
     private def send_notify_new_user(message)
       client = @clients_storage.get_client(message.session_id).not_nil!
       proto_m = Murcure::MessageBuilder.new.process_user_state_message(client)

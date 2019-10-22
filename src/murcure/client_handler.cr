@@ -7,7 +7,7 @@ module Murcure
 
     getter client_channel : Channel(Murcure::Messages::Base)
 
-    def initialize(@client : Murcure::ClientSocket, @server_channel : Channel(Murcure::Messages::Base))
+    def initialize(@session_id : UInt32, @client : Murcure::ClientSocket, @server_channel : Channel(Murcure::Messages::Base))
       @client_channel = Channel(Murcure::Messages::Base).new
     end
 
@@ -21,6 +21,9 @@ module Murcure
         message = @client_channel.receive
         @client.send(message)
       end
+    rescue e : OpenSSL::SSL::Error
+      errmssage = Murcure::Messages::Error.new(:user_remove, e, @session_id )
+      @server_channel.send(errmssage) 
     end
 
     def handle_messages_from_client
@@ -28,6 +31,9 @@ module Murcure
         message = @client.receive   
         @server_channel.send(message)
       end
+    rescue e : OpenSSL::SSL::Error 
+      errmssage = Murcure::Messages::Error.new(:user_remove, e, @session_id )
+      @server_channel.send(errmssage) 
     end
   end
 end

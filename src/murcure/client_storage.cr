@@ -1,6 +1,7 @@
 module Murcure
   class ClientStorage
     def initialize
+      @mutex = Mutex.new
       @clients = {} of UInt32 => Murcure::ClientStruct 
       # NamedTuple(session_id: UInt32, handler: Murcure::ClientHandler, machine: Murcure::ClientState, attrs: Hash(Symbol, (String | Int32 | UInt32| Symbol | Nil | Array(String))))
     end
@@ -11,7 +12,11 @@ module Murcure
       # { session_id: session_id, handler: handler, machine: machine, attrs: {} of Symbol => (String | Int32 | UInt32 | Symbol | Nil | Array(String))}
       true
     end
-
+    
+    def delete_client(session_id : UInt32)
+      @mutex.synchronize { @clients.delete(session_id) }
+    end
+    
     def channel(session_id : (UInt32 | Nil))
       raise "session_id cannot be bil" if session_id.nil?
 
@@ -31,11 +36,13 @@ module Murcure
 
     def update_attr(session_id : (UInt32 | Nil), attr_name : Symbol, attr_value : Murcure::ClientStruct::Attributes) : Bool
       return false if session_id.nil?
+      @mutex.synchronize do
 
-      client = @clients[session_id.not_nil!]
-      return false unless client
+        client = @clients[session_id.not_nil!]
+        return false unless client
 
-      client.attrs[attr_name] = attr_value
+        client.attrs[attr_name] = attr_value
+      end
       true
     end
   end
