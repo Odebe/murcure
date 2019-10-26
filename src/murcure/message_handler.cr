@@ -6,10 +6,13 @@ module Murcure
 
     def initialize(@clients_storage, @rooms_storage); end
 
-    def call(message : Murcure::Messages::Base)
+    def handle_message(message : Murcure::Messages::Base)
       process_ping(message) && return if message.type == :ping
-      process_error(message) && return if message.is_a?(Murcure::Messages::Error)
       process_by_state(message)
+    end
+
+    def handle_error(message : Murcure::Messages::Error)
+      process_error(message)
     end
 
     private def process_by_state(message)
@@ -56,6 +59,8 @@ module Murcure
           client_channel = @clients_storage.channel(another_client.session_id).not_nil!       
           client_channel.send(new_message)
         end
+        
+        puts "User: #{message.session_id} disconnected!"
       end
     end
 5
@@ -74,8 +79,13 @@ module Murcure
       proto_in = message.proto 
       return unless proto_in.is_a?(Murcure::Protos::TextMessage)
 
-      message = Murcure::Messages::Output.new(:text_message, proto_in, message.session_id)        
+      client = @clients_storage.get_client(message.session_id).not_nil!
+      client_rooms = @rooms_storage.client_rooms(client.session_id)
 
+      struct_m = { sender: client, clients: [client], rooms: client_rooms, message: proto_in }
+      proto_m = Murcure::MessageBuilder.new.process_text_message(struct_m)
+      message = Murcure::Messages::Output.new(:text_message, proto_m, message.session_id)        
+      
       @clients_storage.clients.reject { |c| c.session_id == message.session_id }.each do |client|
         client_channel = @clients_storage.channel(client.session_id).not_nil!       
         client_channel.send(message)

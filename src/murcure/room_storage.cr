@@ -13,6 +13,10 @@ module Murcure
       true
     end
 
+    def client_rooms(client_session_id : UInt32) : Array(Murcure::RoomStruct)
+      @rooms.select { |_room_id, room| room.clients.includes?(client_session_id)  }.values
+    end
+
     def add_client(room_id : UInt32, client_session_id : UInt32) : Bool
       @mutex.synchronize { @rooms[room_id].clients << client_session_id }
       true

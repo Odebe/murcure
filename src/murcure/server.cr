@@ -20,8 +20,11 @@ module Murcure
 
       loop do
         message = @server_channel.receive
-        # puts "\nreceived from #{message.session_id} in main channel:\n#{message.inspect}\n"
-        spawn @message_handler.call(message)
+        if message.is_a? Murcure::Messages::Error
+          spawn @message_handler.handle_error(message)
+        else
+          spawn @message_handler.handle_message(message)
+        end
       end
     end
 

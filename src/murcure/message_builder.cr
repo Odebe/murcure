@@ -69,18 +69,33 @@ module Murcure
       m
     end
 
-    # # contract_of "proto2" do
-    # #   optional :actor, :uint32, 1
-    # #   repeated :session, :uint32, 2
-    # #   repeated :channel_id, :uint32, 3
-    # #   repeated :tree_id, :uint32, 4
-    # #   required :message, :string, 5
-    # # end
+    # contract_of "proto2" do
+    #   optional :actor, :uint32, 1
+    #   repeated :session, :uint32, 2
+    #   repeated :channel_id, :uint32, 3
+    #   repeated :tree_id, :uint32, 4
+    #   required :message, :string, 5
+    # end
+    
     # def process_text_message(message : Murcure::Messages::Base, proto : Murcure::Protos::TextMessage)
     #   m = Murcure::Protos::TextMessage.new
     #   m.session = message.session_id
     #   m.channel_id
     # end
+
+    # struct_m = { client: client, rooms: client_rooms, message: proto_in }
+
+    alias TEXT_MESSAGE_TUPLE = NamedTuple(sender: Murcure::ClientStruct, clients: Array(Murcure::ClientStruct), rooms: Array(Murcure::RoomStruct), message: Murcure::Protos::TextMessage)
+    def process_text_message(data : TEXT_MESSAGE_TUPLE)
+      text_message = data[:message].message + "123123"
+      m = Murcure::Protos::TextMessage.new(text_message)
+
+      m.session = data[:clients].map { |c| c.session_id }
+      m.channel_id = data[:rooms].map { |c| c.id } 
+      m.actor = data[:sender].session_id
+      puts m.inspect
+      m
+    end
 
     # contract_of "proto2" do
     #   optional :session, :uint32, 1
