@@ -8,7 +8,7 @@ targets:
   murcure:
     main: src/murcure.cr
 
-crystal: 0.30.1
+crystal: 1.0
 
 license: MIT
 
@@ -19,3 +19,5 @@ dependencies:
     github: spider-gazelle/bindata
   aasm:
     github: veelenga/aasm.cr
+  earl:
+    github: Odebe/earl

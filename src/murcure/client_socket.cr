@@ -8,8 +8,9 @@ module Murcure
     # getter version
     # getter credits
 
-    def initialize(@session_id : UInt32, tcp_socket : TCPSocket, context : OpenSSL::SSL::Context::Server)
-      @ssl_socket = OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
+    def initialize(@session_id : UInt32, tcp_socket : OpenSSL::SSL::Socket::Server)
+      @ssl_socket = tcp_socket
+      # OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
       # @version = {} of Symbol => (String | UInt32 | Nil)
       # @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
     end

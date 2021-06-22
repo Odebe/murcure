@@ -1,3 +1,30 @@
+module Murcure 
+  class NewServer < Earl::SSLServer
+    def initialize(*args)
+      @clients = Murcure::ClientStorage.new
+      @rooms = Murcure::RoomStorage.new
+      @rooms.setup!
+
+      @server_channel = Channel(Murcure::Messages::Base).new # messages from clients to server/other clients
+      @message_handler = Murcure::MessageHandler.new(@clients, @rooms)
+      
+      super(*args) do |client_socket|
+        puts client_socket.inspect
+        
+        session_id = Random.rand(UInt32::MIN..UInt32::MAX)
+        client = Murcure::ClientSocket.new(session_id, client_socket)
+        handler = Murcure::ClientHandler.new(session_id, client, @server_channel)
+        machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
+
+        @clients.add_client(session_id, handler, machine)
+        @rooms.add_client(0_u32, session_id)
+
+        ::spawn handler.call
+      end
+    end
+  end
+end
+
 module Murcure
   class Server
     @context : OpenSSL::SSL::Context::Server
