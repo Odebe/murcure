@@ -14,6 +14,7 @@ module Murcure
     def call
       spawn handle_messages_from_client
       spawn handle_messages_from_server
+      sleep
     end
 
     def handle_messages_from_server

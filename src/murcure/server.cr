@@ -7,6 +7,17 @@ module Murcure
 
       @server_channel = Channel(Murcure::Messages::Base).new # messages from clients to server/other clients
       @message_handler = Murcure::MessageHandler.new(@clients, @rooms)
+
+      ::spawn do 
+        loop do
+          message = @server_channel.receive
+          if message.is_a? Murcure::Messages::Error
+            ::spawn @message_handler.handle_error(message)
+          else
+            ::spawn @message_handler.handle_message(message)
+          end
+        end
+      end
       
       super(*args) do |client_socket|
         puts client_socket.inspect
@@ -19,7 +30,7 @@ module Murcure
         @clients.add_client(session_id, handler, machine)
         @rooms.add_client(0_u32, session_id)
 
-        ::spawn handler.call
+        handler.call
       end
     end
   end
