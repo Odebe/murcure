@@ -12,9 +12,18 @@ module Murcure
     end
 
     def call
-      spawn handle_messages_from_client
-      spawn handle_messages_from_server
-      sleep
+      loop do
+        select
+        when message = @client_channel.receive
+          @client.send(message)
+        when message = @server_channel.receive
+          @server_channel.send(message)
+        end
+      end
+
+      # spawn handle_messages_from_client
+      # spawn handle_messages_from_server
+      # sleep
     end
 
     def handle_messages_from_server

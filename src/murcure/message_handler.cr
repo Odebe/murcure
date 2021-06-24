@@ -1,6 +1,5 @@
 module Murcure
   class MessageHandler
-    
     @clients_storage : Murcure::ClientStorage
     @rooms_storage : Murcure::RoomStorage
 

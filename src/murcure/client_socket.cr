@@ -1,18 +1,52 @@
 module Murcure
   class ClientSocket
-    @ssl_socket : OpenSSL::SSL::Socket::Server
-    # @version : Hash(Symbol, (String | UInt32 | Nil))
-    # @credits : Hash(Symbol, (String | UInt32 | Nil | Array(String)))
+    def initialize(@ssl_socket : OpenSSL::SSL::Socket::Server, @to_server_ch : Channel(Protobuf::Message))
+      @from_server_ch = Channel(Protobuf::Message).new
+      @state_muxtex = Mutex.new
+      @closed = false
+      
+      # receive
+      spawn do
+        until closed?
+          begin
+            @to_server_ch.send(receive_proto)
+          rescue e
+            puts e.inspect
+            close!
+          end
+        end
+      end
 
-    getter session_id : UInt32
-    # getter version
-    # getter credits
+      # send
+      spawn do
+        until closed
+          begin
+            msg = @from_server_ch.receive
+            msg_bytes = convert_proto_tp_bytes(msg)
+            send_bytes(msg.type, msg_bytes)
+          rescue e
+            puts e.inspect
+            close!
+          end
+        end
+      end
+    end
 
-    def initialize(@session_id : UInt32, tcp_socket : OpenSSL::SSL::Socket::Server)
-      @ssl_socket = tcp_socket
-      # OpenSSL::SSL::Socket::Server.new(tcp_socket, context)
-      # @version = {} of Symbol => (String | UInt32 | Nil)
-      # @credits = {} of Symbol => (String | UInt32 | Nil | Array(String))
+    def send(message : Protobuf::Message)
+      @from_server_ch.send(message)
+    end
+
+    def receive : Protobuf::Message
+      @to_server_ch.receive
+    end
+
+    def closed?
+      @state_muxtex.synchronize { @closed } || ssl_socket.closed?
+    end
+
+    def close!
+      @state_muxtex.synchronize { @closed = true }
+      ssl_socket.close
     end
 
     # # TODO: move somewhere
@@ -36,24 +70,23 @@ module Murcure
     #   @version[:os_version] = proto.os_version
     # end
 
-    def receive : Murcure::Messages::Input
+    private def receive_proto : Protobuf::Message
       stack = receive_stack
       
       type = Murcure::ProtosHandler.find_type(stack[:type])      
       proto = Murcure::ProtosHandler.find_struct(stack[:type])      
       memory = IO::Memory.new(stack[:payload])
-      message = proto.from_protobuf(memory)
-      
-      Murcure::Messages::Input.new(type, message, @session_id)
+      proto.from_protobuf(memory)
+      # Murcure::Messages::Input.new(type, message, @session_id)
     end
 
-    def send(message : Murcure::Messages::Base) : Nil
-      type_num = Murcure::ProtosHandler.find_type_number(message.type)
-      msg_bytes = convert_proto_tp_bytes(message)
-      puts "type: #{type_num}, bytes: #{msg_bytes}"
-      send_bytes(type_num, msg_bytes)
-      nil
-    end
+    # def send(message : Murcure::Messages::Base) : Nil
+    #   type_num = Murcure::ProtosHandler.find_type_number(message.type)
+    #   msg_bytes = convert_proto_tp_bytes(message)
+    #   puts "type: #{type_num}, bytes: #{msg_bytes}"
+    #   send_bytes(type_num, msg_bytes)
+    #   nil
+    # end
 
     private def convert_proto_tp_bytes(message : Murcure::Messages::Base) : Bytes
       message_memory = message.proto.not_nil!.to_protobuf

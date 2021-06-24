@@ -1,9 +1,11 @@
 module Murcure
-  class ClientState
+  module ClientState
     include AASM
 
-    def initialize
+    def initialize(*args)
+      super(args)
       @operations = [] of Symbol
+      act_as_state_machine
     end
 
     def has_auth?
@@ -67,7 +69,6 @@ module Murcure
         e.before { @operations << :sync_sent }
         e.transitions from: :sync, to: :active
       end
-
     end
   end
 end

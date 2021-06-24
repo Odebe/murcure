@@ -1,104 +1,24 @@
+require "./server_state"
+
 module Murcure 
-  class NewServer < Earl::SSLServer
-    def initialize(*args)
-      @clients = Murcure::ClientStorage.new
-      @rooms = Murcure::RoomStorage.new
-      @rooms.setup!
-
-      @server_channel = Channel(Murcure::Messages::Base).new # messages from clients to server/other clients
-      @message_handler = Murcure::MessageHandler.new(@clients, @rooms)
-
-      ::spawn do 
-        loop do
-          message = @server_channel.receive
-          if message.is_a? Murcure::Messages::Error
-            ::spawn @message_handler.handle_error(message)
-          else
-            ::spawn @message_handler.handle_message(message)
-          end
-        end
-      end
-      
-      super(*args) do |client_socket|
-        puts client_socket.inspect
-        
-        session_id = Random.rand(UInt32::MIN..UInt32::MAX)
-        client = Murcure::ClientSocket.new(session_id, client_socket)
-        handler = Murcure::ClientHandler.new(session_id, client, @server_channel)
-        machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
-
-        @clients.add_client(session_id, handler, machine)
-        @rooms.add_client(0_u32, session_id)
-
-        handler.call
-      end
-    end
-  end
-end
-
-module Murcure
-  class Server
-    @context : OpenSSL::SSL::Context::Server
-    @rooms : Murcure::RoomStorage
-
-    def initialize(port : Int32)
-      @server = TCPServer.new("localhost", port)
-      @context = setup_context
-      @server_channel = Channel(Murcure::Messages::Base).new # messages from clients to server/other clients
-      
-      @clients = Murcure::ClientStorage.new
-      @rooms = setup_rooms
-      
-      @message_handler = Murcure::MessageHandler.new(@clients, @rooms)
+  class NewServer
+    def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server)
+      @server = TCPServer.new(@host, @port)
+      @state = ServerState.new
+      @workers_pool = Earl::PoolWithState(Actors::Worker, Client, ServerState).new(capacity: 10, state: @state)
     end
 
-    def run!
-      setup_rooms
-      start_new_clients_handling
-
-      loop do
-        message = @server_channel.receive
-        if message.is_a? Murcure::Messages::Error
-          spawn @message_handler.handle_error(message)
-        else
-          spawn @message_handler.handle_message(message)
-        end
+    def start!
+      while socket = @server.accept?
+        handle_new_client(socket)
       end
     end
 
-    private def setup_rooms
-      rooms = Murcure::RoomStorage.new
-      rooms.setup!
-      rooms
-    end
+    def handle_new_client(client_socket : OpenSSL::SSL::Socket::Server)
+      socket_reader = ClientSocket.new(client_socket)
+      client = Client.new(socket_reader)
 
-    private def start_new_clients_handling
-      spawn do
-        loop do
-          begin
-            if client_socket = @server.accept?
-              session_id = Random.rand(UInt32::MIN..UInt32::MAX)
-              client = Murcure::ClientSocket.new(session_id, client_socket, @context)
-              handler = Murcure::ClientHandler.new(session_id, client, @server_channel)
-              machine = Murcure::ClientState.new.tap(&.act_as_state_machine)
-
-              @clients.add_client(session_id, handler, machine)
-              @rooms.add_client(0_u32, session_id)
-
-              spawn handler.call
-            end
-          rescue
-            # puts e.inspect
-          end
-        end 
-      end
-    end
-
-    private def setup_context : OpenSSL::SSL::Context::Server
-      context = OpenSSL::SSL::Context::Server.new
-      context.private_key = "key.pem"
-      context.certificate_chain = "certificate.pem"
-      context
+      @workers_pool.send(client)
     end
   end
 end

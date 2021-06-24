@@ -21,3 +21,5 @@ dependencies:
     github: veelenga/aasm.cr
   earl:
     github: Odebe/earl
+  rwlock:
+    github: spider-gazelle/readers-writer

@@ -3,9 +3,13 @@ require "openssl"
 require "bindata"
 require "aasm"
 require "earl"
-require "../lib/earl/src/socket/ssl_server.cr"
+require "rwlock"
+
+require "../lib/earl/src/agent"
+require "../lib/earl/src/pool_with_state.cr"
 
 require "./murcure/*"
+require "./murcure/storage/*"
 require "./murcure/actors/*"
 require "./murcure/messages/*"
 
@@ -22,13 +26,6 @@ port = 12312
 # server = Murcure::Server.new(port)
 # server.run!
  
-# ssl_config = { 
-#   "key" => "key.pem",
-#   "cert" => "cert.pem"
-# }
-
-# ssl_context = OpenSSL::SSL::Context::Server.from_hash(ssl_config)
-
 ssl_context = OpenSSL::SSL::Context::Server.new
 ssl_context.private_key = "key.pem"
 ssl_context.certificate_chain = "cert.pem"

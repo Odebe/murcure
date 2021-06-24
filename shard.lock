@@ -16,3 +16,7 @@ shards:
     git: https://github.com/jeromegn/protobuf.cr.git
     version: 2.1.2
 
+  rwlock:
+    git: https://github.com/spider-gazelle/readers-writer.git
+    version: 1.0.7
+
