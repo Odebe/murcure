@@ -32,7 +32,6 @@ module Murcure
       # 25	SuggestConfig
     }
 
-    # BUG: called create_llvm_type for M (Exception)
     {% begin %}
       MESSAGE_NUMBERS = {
         {% for num, klass in MESSAGE_CLASSES %}
@@ -46,8 +45,7 @@ module Murcure
     end
 
     def find_type(klass)
-      # MESSAGE_NUMBERS[klass].not_nil!
-      MESSAGE_CLASSES.find { |_, k| k == klass }.not_nil![0]
+      MESSAGE_NUMBERS[klass].not_nil!
     end
   end
 end
