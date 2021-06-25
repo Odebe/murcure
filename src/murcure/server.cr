@@ -11,7 +11,7 @@ module Murcure
     def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server)
       @server = TCPServer.new(@host, @port)
       @state = ServerState.new
-      @workers_pool = Pool(Actors::Worker, Client, ServerState).new(capacity: 2, agent_init_state: @state)
+      @workers_pool = Pool(Actors::Worker, Client, ServerState).new(capacity: 10, agent_init_state: @state)
       @workers_pool.call
     end
 

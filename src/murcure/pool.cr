@@ -14,13 +14,13 @@ module Murcure
     # Spawns workers in their dedicated `Fiber`. Blocks until all workers have
     # stopped.
     def call
-      @capacity.times do
+      @capacity.times do |i|
         spawn do
           agent = A.new(@agent_init_state)
           @mutex.synchronize { @workers << agent }
 
           while agent.starting?
-            puts "starting worker"
+            puts "starting tcp worker №#{i}"
             agent.mailbox = @mailbox
             agent.start(link: self)
           end
