@@ -7,21 +7,25 @@ module Murcure
       end
 
       def call
-        auth_step!
         set_default_params!
+        auth_step!
         sync_step!
         main_loop!
       end
 
       def auth_step!
         until @client.auth_ended?
-          handle(@client.receive)
+          msg = @client.receive
+          break if msg.nil?
+
+          handle(msg)
         end
       end
 
       def set_default_params!
         @client.write do
           @client.channel_id = @server.default_channel_id
+          @server.add_to_room(@client, @server.default_channel_id)
         end
       end
 
@@ -36,7 +40,7 @@ module Murcure
           notify_user_state
         # end
 
-        client.activate
+        @client.activate
       end
 
       def send_channels_state
@@ -55,8 +59,7 @@ module Murcure
         m.name = @client.username
         m.channel_id = @client.channel_id
         
-        users = @server.users_list
-        users.each { |user| user.send(m) }
+        @server.users { |users| users.each { |user |user.send(m) } }
       end
 
       def send_server_sync
@@ -69,15 +72,23 @@ module Murcure
       end
       
       def main_loop!
-        while running? && @client.active?
-          handle(@client.receive)
+        loop do
+          msg = @client.receive
+          break if msg.nil?
+
+          handle(msg)
         end
+      rescue e
+        puts e.inspect
+        puts e.backtrace.join("\n")
+      ensure
+        puts "!!! client #{@client.username} disconnected"
       end
 
       def handle(msg : Murcure::Protos::Version)
         @client.add_version do |c|
           c.version = msg.version
-          c.release = msg.relese
+          c.release = msg.release
           c.os = msg.os
           c.os_version = msg.os_version
         end
@@ -85,7 +96,7 @@ module Murcure
 
       def handle(msg : Murcure::Protos::Authenticate)
         @client.add_auth do |c|
-          c.username = msg.username
+          c.username = msg.username.not_nil!
           c.password = msg.password
           c.tokens = msg.tokens
         end
@@ -93,13 +104,13 @@ module Murcure
 
       def handle(message : Murcure::Protos::Ping)
         m = Murcure::Protos::Ping.new
-        m.timestamp = 123123
+        m.timestamp = message.timestamp
 
         @client.send(m)
       end
 
       def handle(message : Protobuf::Message)
-        puts "unimplimented package"
+        puts "!!! unimplimented package : #{message.class.name} !!!"
       end
     end
   end

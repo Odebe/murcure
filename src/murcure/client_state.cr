@@ -2,8 +2,7 @@ module Murcure
   module ClientState
     include AASM
 
-    def initialize(*args)
-      super(args)
+    def initialize
       @operations = [] of Symbol
       act_as_state_machine
     end

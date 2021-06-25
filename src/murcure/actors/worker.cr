@@ -14,10 +14,9 @@ module Murcure
           Client.new(@server, client).start
         rescue e
           puts e.inspect
+          puts e.backtrace.join("\n")
         ensure
-          client.close rescue nil
-          @server.remove_client(@client)
-          next
+          @server.remove_client(client) if client
         end
       end
     end

@@ -1,32 +1,52 @@
+require "./stack"
+require "./protos_handler"
+
 module Murcure
   class ClientSocket
+    class ConnectionClosed < Exception; end
+
+    getter done : Channel(Nil)
+
     def initialize(@ssl_socket : OpenSSL::SSL::Socket::Server, @to_server_ch : Channel(Protobuf::Message))
       @from_server_ch = Channel(Protobuf::Message).new
-      @state_muxtex = Mutex.new
+      @state_mutex = Mutex.new
       @closed = false
-      
+      @last_butes = Bytes.new(0)
+      @done = Channel(Nil).new
+
       # receive
       spawn do
         until closed?
           begin
-            @to_server_ch.send(receive_proto)
+            @to_server_ch.send(read)
+          rescue e : ConnectionClosed
+            close!
           rescue e
             puts e.inspect
+            puts e.backtrace.join("\n")
             close!
+            break
           end
         end
       end
 
       # send
       spawn do
-        until closed
+        until closed?
           begin
             msg = @from_server_ch.receive
-            msg_bytes = convert_proto_tp_bytes(msg)
-            send_bytes(msg.type, msg_bytes)
+            bytes = proto_to_bytes(msg)
+            type_num = Murcure::ProtosHandler.find_type(msg.class)
+            puts ">> type: #{type_num}, bytes: #{bytes}"
+            send_bytes(type_num, bytes)
+          rescue e : Channel::ClosedError
+            break
           rescue e
             puts e.inspect
+            puts e.backtrace.join("\n")
+
             close!
+            break
           end
         end
       end
@@ -41,55 +61,26 @@ module Murcure
     end
 
     def closed?
-      @state_muxtex.synchronize { @closed } || ssl_socket.closed?
+      @state_mutex.synchronize { @closed } || @ssl_socket.closed? # || @last_butes.empty?
     end
 
     def close!
-      @state_muxtex.synchronize { @closed = true }
-      ssl_socket.close
+      @state_mutex.synchronize { @closed = true }
+      @ssl_socket.close rescue nil
+      @to_server_ch.close
+      @from_server_ch.close
     end
 
-    # # TODO: move somewhere
-    # def save_credits!(message)
-    #   proto = message.proto_struct
-    #   return unless proto.is_a?(Murcure::Protos::Authenticate)
-
-    #   @credits[:username] = proto.username
-    #   @credits[:password] = proto.password
-    #   @credits[:tokens] = proto.tokens
-    # end
-
-    # # TODO: move somewhere
-    # def save_version!(message)
-    #   proto = message.proto_struct
-    #   return unless proto.is_a?(Murcure::Protos::Version)
-      
-    #   @version[:version] = proto.version
-    #   @version[:release] = proto.release
-    #   @version[:os] = proto.os
-    #   @version[:os_version] = proto.os_version
-    # end
-
-    private def receive_proto : Protobuf::Message
+    private def read : Protobuf::Message
       stack = receive_stack
       
-      type = Murcure::ProtosHandler.find_type(stack[:type])      
-      proto = Murcure::ProtosHandler.find_struct(stack[:type])      
+      proto = Murcure::ProtosHandler.find_class(stack[:type])      
       memory = IO::Memory.new(stack[:payload])
       proto.from_protobuf(memory)
-      # Murcure::Messages::Input.new(type, message, @session_id)
     end
 
-    # def send(message : Murcure::Messages::Base) : Nil
-    #   type_num = Murcure::ProtosHandler.find_type_number(message.type)
-    #   msg_bytes = convert_proto_tp_bytes(message)
-    #   puts "type: #{type_num}, bytes: #{msg_bytes}"
-    #   send_bytes(type_num, msg_bytes)
-    #   nil
-    # end
-
-    private def convert_proto_tp_bytes(message : Murcure::Messages::Base) : Bytes
-      message_memory = message.proto.not_nil!.to_protobuf
+    private def proto_to_bytes(message : Protobuf::Message) : Bytes
+      message_memory = message.to_protobuf
       message_memory.rewind
       bytes = Bytes.new(message_memory.bytesize)
       message_memory.read(bytes)
@@ -120,6 +111,8 @@ module Murcure
       io = IO::Memory.new(header_bytes)
       stack = io.read_bytes(Murcure::Stack, format: IO::ByteFormat::NetworkEndian)
       payload = receive_payload(stack.size)
+
+      puts "<< type: #{stack.type}, bytes: #{payload}"
       
       { :type => stack.type, :size => stack.size, :payload => payload }
     end
@@ -129,7 +122,11 @@ module Murcure
 
     private def receive_bytes(size : UInt32) : Bytes
       bytes = Bytes.new(size)
-      @ssl_socket.read(bytes)
+      size = @ssl_socket.read(bytes)
+
+      # @last_butes = butes
+      raise ConnectionClosed.new if size.zero?
+
       bytes
     end
   end
