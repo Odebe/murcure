@@ -38,6 +38,12 @@ module Murcure
       @clients_rwlock.write { @clients << client }
     end
 
+    def select_rooms(ids : Array(UInt32)) : Array(Room)
+      @rooms_rwlock.read do
+        @rooms.select { |r| ids.includes? r.id }
+      end
+    end
+
     def remove_client(client : Client) : Void
       @clients_rwlock.write { @clients.delete client }
       remove_from_room(client, client.channel_id)

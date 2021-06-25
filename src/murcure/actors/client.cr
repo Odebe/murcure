@@ -109,8 +109,29 @@ module Murcure
         @client.send(m)
       end
 
+      def handle(message : Murcure::Protos::TextMessage)
+        rooms = @server.select_rooms(message.channel_id.not_nil!)
+        
+        new_msg = message.dup
+        new_msg.actor = @client.session_id.not_nil!
+        
+        # TODO: if @server.config.echo?
+        echo = message.dup
+        echo.message = "echo #{message.message}!!!"  
+        @client.send(echo)
+
+        rooms.each do |room|
+          room.clients do |clients|
+            clients.each do |client|
+              client.send(new_msg) if client != @client
+            end
+          end
+        end
+      end
+
       def handle(message : Protobuf::Message)
-        puts "!!! unimplimented package : #{message.class.name} !!!"
+        puts "!!! client #{@client.session_id}"
+        puts "!!! unimplimented package : #{message.inspect} !!!"
       end
     end
   end
