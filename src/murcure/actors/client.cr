@@ -1,9 +1,13 @@
+require "../client/*"
+require "../server/state"
+require "../utils/protos"
+
 module Murcure
   module Actors
     class Client
       include Earl::Agent
 
-      def initialize(@server : Murcure::ServerState, @client : Murcure::Client)
+      def initialize(@server : Server::State, @client : Murcure::Client::Entity)
       end
 
       def call

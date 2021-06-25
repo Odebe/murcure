@@ -1,17 +1,21 @@
+require "../server/state"
+require "../client/entity"
+
 module Murcure
   module Actors
     class Worker
       include Earl::Agent
-      include Earl::Mailbox(Murcure::Client)
+      include Earl::Mailbox(Murcure::Client::Entity)
 
-      def initialize(@server : Murcure::ServerState)
+      def initialize(@server : Server::State)
       end
 
       def call
         loop do
           client = receive
+          puts "new client"
           @server.add_client(client)
-          Client.new(@server, client).start
+          Actors::Client.new(@server, client).start
         rescue e
           puts e.inspect
           puts e.backtrace.join("\n")

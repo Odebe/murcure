@@ -10,7 +10,7 @@ require "rwlock"
 require "../lib/earl/src/artist.cr"
 require "../lib/earl/src/agent.cr"
 
-require "./murcure/server"
+require "./murcure/server/tcp"
 
 module Murcure
   VERSION = "0.1.0"
@@ -70,7 +70,7 @@ ssl_context.private_key = private_key
 ssl_context.certificate_chain = certificate_chain
 
 # TODO: Murcure::Config
-server = Murcure::NewServer.new(host, port, ssl_context)
+server = Murcure::Server::Tcp.new(host, port, ssl_context)
 server.start!
 
 sleep
