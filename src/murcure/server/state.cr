@@ -7,10 +7,13 @@ module Murcure
   module Server
     class State
       getter welcome_text : String
+      getter max_users : UInt8
 
       def initialize
+        # TODO: config
         @welcome_text = "Welcome to VoIP hotel"
-        
+        @max_users = 100
+
         @clients_rwlock = RWLock.new
         @clients = [] of Client::Entity
 
@@ -22,6 +25,10 @@ module Murcure
 
       def users
         @clients_rwlock.read { yield @clients }
+      end
+      
+      def user_count
+        users { |u| u.size }
       end
 
       def default_channel_id

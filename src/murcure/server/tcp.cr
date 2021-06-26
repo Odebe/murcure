@@ -6,9 +6,8 @@ require "../utils/pool"
 module Murcure 
   module Server
     class Tcp
-      def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server)
+      def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server, @state : State = State.new)
         @server = TCPServer.new(@host, @port)
-        @state = State.new
         @workers_pool = Pool(Actors::Worker, Client::Entity, Server::State).new(capacity: 10, agent_init_state: @state)
         @workers_pool.call
       end

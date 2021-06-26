@@ -11,9 +11,11 @@ require "../lib/earl/src/artist.cr"
 require "../lib/earl/src/agent.cr"
 
 require "./murcure/server/tcp"
+require "./murcure/server/udp"
 
 module Murcure
-  VERSION = "0.1.0"
+  VERSION_ARRAY = [0,0,1,0]
+  VERSION = VERSION_ARRAY[1..-1].join(".")
 end
 
 host = "0.0.0.0"
@@ -70,7 +72,12 @@ ssl_context.private_key = private_key
 ssl_context.certificate_chain = certificate_chain
 
 # TODO: Murcure::Config
-server = Murcure::Server::Tcp.new(host, port, ssl_context)
-server.start!
+state = Murcure::Server::State.new
+
+tcp_server = Murcure::Server::Tcp.new(host, port, ssl_context, state)
+spawn { tcp_server.start! }
+
+udp_server = Murcure::Server::Udp.new(host, port, ssl_context, state)
+spawn { udp_server.start! }
 
 sleep
