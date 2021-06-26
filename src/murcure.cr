@@ -1,17 +1,90 @@
+require "option_parser"
+
 require "socket"
 require "openssl"
 require "bindata"
 require "aasm"
+require "earl"
+require "rwlock"
 
-require "./murcure/*"
-require "./murcure/messages/*"
+require "../lib/earl/src/artist.cr"
+require "../lib/earl/src/agent.cr"
 
-# require "./murcure/message_decorators/*"
+require "./murcure/server/tcp"
+require "./murcure/server/udp"
 
-# TODO: Write documentation for `Murcure`
 module Murcure
-  VERSION = "0.1.0"
-  
-  server = Murcure::Server.new(12312)
-  server.run!
+  VERSION_ARRAY = [0,0,1,0]
+  VERSION = VERSION_ARRAY[1..-1].join(".")
 end
+
+host = "0.0.0.0"
+port = 64738_u32
+private_key = "key.pem"
+certificate_chain = "cert.pem"
+enable_udp = false
+
+OptionParser.parse do |parser|
+  parser.banner = "Usage: murcure -p 64738 -k key.pem -c cert.pem"
+
+  parser.on("-p PORT", "--port=PORT", "port") do |par_port| 
+    port = par_port.to_u32
+  end
+
+  parser.on("-u", "--udp", "enables udp") do
+    enable_udp = true
+  end
+
+  parser.on("-k KEY_PATH", "--key=KEY_PATH", "ssl server private key") do |key_path| 
+    unless File.exists?(key_path)
+      STDERR.puts "ERROR: key_path not found"
+      STDERR.puts parser
+      exit(1)
+    end
+
+    private_key = key_path
+  end
+
+  parser.on("-c CERT_PATH", "--cert=CERT_PATH", "ssl server cert") do |cert_path| 
+    unless File.exists?(cert_path)
+      STDERR.puts "ERROR: cert_path not found"
+      STDERR.puts parser
+      exit(1)
+    end
+
+    certificate_chain = cert_path
+  end
+
+  parser.on("-v", "--version", "Show version") do
+    puts "Murcure #{Murcure::VERSION}"
+    exit
+  end
+
+  parser.on("-h", "--help", "Show this help") do
+    puts parser
+    exit
+  end
+
+  parser.invalid_option do |flag|
+    STDERR.puts "ERROR: #{flag} is not a valid option."
+    STDERR.puts parser
+    exit(1)
+  end
+end
+
+ssl_context = OpenSSL::SSL::Context::Server.new
+ssl_context.private_key = private_key
+ssl_context.certificate_chain = certificate_chain
+
+# TODO: Murcure::Config
+state = Murcure::Server::State.new
+
+tcp_server = Murcure::Server::Tcp.new(host, port, ssl_context, state)
+spawn { tcp_server.start! }
+
+if enable_udp
+  udp_server = Murcure::Server::Udp.new(host, port, ssl_context, state)
+  spawn { udp_server.start! }
+end
+
+sleep
