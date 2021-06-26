@@ -22,7 +22,7 @@ module Murcure
           response.ident = request.ident
           response.user_count = @state.user_count.to_u32
           response.max_users = @state.max_users.to_u32
-          response.bandwidth = 0
+          response.bandwidth = @state.max_bandwidth
 
           response.write(io)
           @udp.send(io.to_s, to: addr)

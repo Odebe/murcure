@@ -69,6 +69,7 @@ module Murcure
       def send_server_sync
         m = Murcure::Protos::ServerSync.new
         m.session = @client.session_id.to_u32
+        m.max_bandwidth = @server.max_bandwidth
         m.welcome_text = @server.welcome_text
         m.permissions = 1_u64
 

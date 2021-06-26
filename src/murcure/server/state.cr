@@ -8,11 +8,13 @@ module Murcure
     class State
       getter welcome_text : String
       getter max_users : UInt8
+      getter max_bandwidth : UInt32
 
       def initialize
         # TODO: config
         @welcome_text = "Welcome to VoIP hotel"
         @max_users = 10
+        @max_bandwidth = 72000
 
         @clients_rwlock = RWLock.new
         @clients = [] of Client::Entity
