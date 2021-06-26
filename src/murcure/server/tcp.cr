@@ -8,7 +8,7 @@ module Murcure
     class Tcp
       def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server, @state : State = State.new)
         @server = TCPServer.new(@host, @port)
-        @workers_pool = Pool(Actors::Worker, Client::Entity, Server::State).new(capacity: 10, agent_init_state: @state)
+        @workers_pool = Pool(Actors::Worker, Client::Entity, Server::State).new(capacity: @state.max_users.to_i32, agent_init_state: @state)
         @workers_pool.call
       end
 

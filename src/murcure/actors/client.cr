@@ -70,7 +70,7 @@ module Murcure
         m = Murcure::Protos::ServerSync.new
         m.session = @client.session_id.to_u32
         m.welcome_text = @server.welcome_text
-        m.permissions = 123123_u64
+        m.permissions = 1_u64
 
         @client.send(m)
       end
@@ -113,6 +113,11 @@ module Murcure
         @client.send(m)
       end
 
+      def handle(message : Murcure::Protos::PermissionQuery)
+        message.permissions = 1_u64
+        @client.send(message)
+      end
+
       def handle(message : Murcure::Protos::TextMessage)
         rooms = @server.select_rooms(message.channel_id.not_nil!)
         
@@ -120,9 +125,9 @@ module Murcure
         new_msg.actor = @client.session_id.not_nil!
         
         # TODO: if @server.config.echo?
-        echo = message.dup
-        echo.message = "echo #{message.message}!!!"  
-        @client.send(echo)
+        # echo = message.dup
+        # echo.message = "echo #{message.message}!!!"  
+        # @client.send(echo)
 
         rooms.each do |room|
           room.clients do |clients|
@@ -134,7 +139,6 @@ module Murcure
       end
 
       def handle(message : Protobuf::Message)
-        puts "!!! client #{@client.session_id}"
         puts "!!! unimplimented package : #{message.inspect} !!!"
       end
     end

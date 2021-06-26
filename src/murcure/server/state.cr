@@ -12,7 +12,7 @@ module Murcure
       def initialize
         # TODO: config
         @welcome_text = "Welcome to VoIP hotel"
-        @max_users = 100
+        @max_users = 10
 
         @clients_rwlock = RWLock.new
         @clients = [] of Client::Entity
@@ -55,8 +55,11 @@ module Murcure
       end
 
       def remove_client(client : Client::Entity) : Void
-        @clients_rwlock.write { @clients.delete client }
         remove_from_room(client, client.channel_id)
+        @clients_rwlock.write { @clients.delete client }
+        
+        msg = Murcure::Protos::UserRemove.new(session: client.session_id.not_nil!)
+        users { |us| us.each { |u| u.send(msg) } }
       end
 
       def users_state : Array(Murcure::Protos::UserState)

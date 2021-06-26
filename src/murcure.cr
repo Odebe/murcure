@@ -22,12 +22,17 @@ host = "0.0.0.0"
 port = 64738_u32
 private_key = "key.pem"
 certificate_chain = "cert.pem"
+enable_udp = false
 
 OptionParser.parse do |parser|
   parser.banner = "Usage: murcure -p 64738 -k key.pem -c cert.pem"
 
   parser.on("-p PORT", "--port=PORT", "port") do |par_port| 
     port = par_port.to_u32
+  end
+
+  parser.on("-u", "--udp", "enables udp") do
+    enable_udp = true
   end
 
   parser.on("-k KEY_PATH", "--key=KEY_PATH", "ssl server private key") do |key_path| 
@@ -77,7 +82,9 @@ state = Murcure::Server::State.new
 tcp_server = Murcure::Server::Tcp.new(host, port, ssl_context, state)
 spawn { tcp_server.start! }
 
-udp_server = Murcure::Server::Udp.new(host, port, ssl_context, state)
-spawn { udp_server.start! }
+if enable_udp
+  udp_server = Murcure::Server::Udp.new(host, port, ssl_context, state)
+  spawn { udp_server.start! }
+end
 
 sleep

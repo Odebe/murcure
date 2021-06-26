@@ -6,3 +6,6 @@ build:
 
 run:
 	cd bin && ./murcure -p 64738 -k key.pem -c cert.pem
+
+run_w_udp:
+	cd bin && ./murcure -p 64738 -k key.pem -c cert.pem -u
