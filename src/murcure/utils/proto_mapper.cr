@@ -12,6 +12,7 @@ module Murcure
       4 => Murcure::Protos::Reject,    
       5 => Murcure::Protos::ServerSync,
       7 => Murcure::Protos::ChannelState,
+      8 => Murcure::Protos::UserRemove,
       9 => Murcure::Protos::UserState,
       10 => Murcure::Protos::BanList,
       11 => Murcure::Protos::TextMessage,
@@ -24,12 +25,11 @@ module Murcure
       18 => Murcure::Protos::UserList,
       19 => Murcure::Protos::VoiceTarget,
       20 => Murcure::Protos::PermissionQuery,
-      # 20	PermissionQuery
-      # 21	CodecVersion
-      # 22	UserStats
-      # 23	RequestBlob
-      # 24	ServerConfig
-      # 25	SuggestConfig
+      21 => Murcure::Protos::CodecVersion,
+      22 => Murcure::Protos::UserStats,
+      23 => Murcure::Protos::RequestBlob,
+      24 => Murcure::Protos::ServerConfig,
+      25 => Murcure::Protos::SuggestConfig,
     }
 
     {% begin %}
