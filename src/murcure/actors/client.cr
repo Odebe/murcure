@@ -4,6 +4,7 @@ require "../utils/protos"
 
 module Murcure
   module Actors
+    # Actor responsible for handling new clients.
     class Client
       include Earl::Agent
 

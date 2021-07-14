@@ -2,6 +2,7 @@ require "../client/entity"
 
 module Murcure
   module Room
+    # Stores clients list and provides read\write look to access\modify clients list.
     class Entity
       getter id : UInt32
       getter parent_id : UInt32

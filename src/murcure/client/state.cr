@@ -1,5 +1,6 @@
 module Murcure
   module Client
+    # This module stores AASM of client states 
     module State
       include AASM
 

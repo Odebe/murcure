@@ -4,6 +4,7 @@ require "../utils/protos"
 
 module Murcure
   module Client
+    # Stores parameters of client and provides read\write look to access\modify is` params. 
     class Entity
       include State
   

@@ -4,6 +4,8 @@ require "../utils/proto_mapper"
 
 module Murcure
   module Client
+    # This class responsible for encapsulate usage of sockets.
+    # FIXME: there is some strange things about receive\send loops.
     class SocketReader
       class ConnectionClosed < Exception; end
 

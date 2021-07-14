@@ -3,6 +3,8 @@ require "../client/entity"
 
 module Murcure
   module Actors
+    # Actor responsible for handling new clients.
+    # FIXME: maybe remove this class? Logic can be moved to `Actors::Client`.  
     class Worker
       include Earl::Agent
       include Earl::Mailbox(Murcure::Client::Entity)
