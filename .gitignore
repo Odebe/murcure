@@ -1,5 +1,11 @@
 /docs/
 /lib/
 /bin/
+
+/run/cert.pem
+/run/key.pem
+/run/config.yml
+/run/murcure
+
 /.shards/
 *.dwarf
