@@ -19,10 +19,10 @@ module Murcure
     class Response < BinData
       endian big
   
-      uint8 :ver_, value: -> { Murcure::VERSION_ARRAY[0] }
-      uint8 :ver_maj, value: -> { Murcure::VERSION_ARRAY[1] }
-      uint8 :ver_man, value: -> { Murcure::VERSION_ARRAY[2] }
-      uint8 :ver_patch, value: -> { Murcure::VERSION_ARRAY[3] }
+      uint8 :ver_, value: -> { 0 }
+      uint8 :ver_maj, value: -> { Murcure::MUMBLE_VER_ARR[1] }
+      uint8 :ver_man, value: -> { Murcure::MUMBLE_VER_ARR[2] }
+      uint8 :ver_patch, value: -> { Murcure::MUMBLE_VER_ARR[3] }
       
       uint64 :ident
       uint32 :user_count
