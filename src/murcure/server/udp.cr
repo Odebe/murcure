@@ -3,6 +3,7 @@ require "../utils/ping"
 
 module Murcure 
   module Server
+    # This class represents UDP part of server. Creates UDP socket and listens to pings.
     class Udp
       def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server, @state : State = State.new)
         @udp = UDPSocket.new

@@ -5,6 +5,8 @@ require "../utils/pool"
 
 module Murcure 
   module Server
+    # This class represents TCP part of server. Creates UDP SSL socket and workers pool.
+    # After accepting new client connection passes it to `Actors::Worker` through Pool.
     class Tcp
       def initialize(@host : String, @port : UInt32, @ssl_context : OpenSSL::SSL::Context::Server, @state : State = State.new)
         @server = TCPServer.new(@host, @port)

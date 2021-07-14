@@ -2,6 +2,9 @@ require "option_parser"
 require "./versions"
 
 module Murcure
+  # This module sort of wraps call for OptionParser.
+  # TODO: add option for path to config
+  # TODO: pass here Server::Config or maybe return options from here 
   module Options
     extend self
 

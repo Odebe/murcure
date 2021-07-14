@@ -1,5 +1,6 @@
 module Murcure
   module Server
+    # This struct holds information from config file.
     struct Config
       include Totem::ConfigBuilder
       

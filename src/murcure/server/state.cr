@@ -5,6 +5,8 @@ require "../utils/protos"
 
 module Murcure
   module Server
+    # This class is used to store state of server.
+    # Instance provide methods to acces users, rooms and information from config.
     class State
       def initialize(@config : Server::Config)
         @clients_rwlock = RWLock.new
