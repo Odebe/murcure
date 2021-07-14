@@ -12,6 +12,10 @@ shards:
     git: https://github.com/odebe/earl.git
     version: 0.2.0
 
+  popcorn:
+    git: https://github.com/icyleaf/popcorn.git
+    version: 0.3.0
+
   protobuf:
     git: https://github.com/jeromegn/protobuf.cr.git
     version: 2.1.2
@@ -19,4 +23,8 @@ shards:
   rwlock:
     git: https://github.com/spider-gazelle/readers-writer.git
     version: 1.0.7
+
+  totem:
+    git: https://github.com/icyleaf/totem.git
+    version: 0.7.0
 

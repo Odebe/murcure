@@ -28,7 +28,7 @@ module Murcure
 
       def set_default_params!
         @client.write do
-          @client.channel_id = @server.default_channel_id
+          @client.channel_id = @server.default_channel_id.not_nil!
           @server.add_to_room(@client, @server.default_channel_id)
         end
       end

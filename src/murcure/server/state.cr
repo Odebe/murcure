@@ -6,23 +6,24 @@ require "../utils/protos"
 module Murcure
   module Server
     class State
-      getter welcome_text : String
-      getter max_users : UInt8
-      getter max_bandwidth : UInt32
-
-      def initialize
-        # TODO: config
-        @welcome_text = "Welcome to VoIP hotel"
-        @max_users = 10
-        @max_bandwidth = 72000
-
+      def initialize(@config : Server::Config)
         @clients_rwlock = RWLock.new
         @clients = [] of Client::Entity
-
         @rooms_rwlock = RWLock.new
         @rooms = [] of Room::Entity
         @rooms << Room::Entity.new(0_u32, 0_u32, "root", [] of Client::Entity)
-        @default_room_id = 0_u32
+      end
+
+      def welcome_text
+        @config.welcome_text
+      end
+
+      def max_users
+        @config.max_users
+      end
+
+      def max_bandwidth
+        @config.max_bandwidth
       end
 
       def users
@@ -34,7 +35,7 @@ module Murcure
       end
 
       def default_channel_id
-        @default_room_id
+        @config.default_room_id
       end
 
       def add_to_room(client : Client::Entity, room_id : UInt32)
