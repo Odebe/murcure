@@ -24,30 +24,27 @@ module Murcure
       # room
       property channel_id : UInt32?
   
-      def initialize(socket : OpenSSL::SSL::Socket::Server)
+      def initialize(ssl_socket : OpenSSL::SSL::Socket::Server)
         super() # state
-  
-        @ch_from_socket = Channel(Protobuf::Message).new
-        @ch_from_server = Channel(Protobuf::Message).new
-        @socket_reader = SocketReader.new(socket, @ch_from_socket)
-  
+
+        @socket = Socket.new(ssl_socket)  
+
         @rwlock = RWLock.new
         @session_id = Random.rand(UInt32::MIN..UInt32::MAX)
       end
+
+      def connected?
+        puts "Client:Entity#connected? => #{@socket.open?}"
+        @socket.open?
+      end
   
       def receive : Protobuf::Message?
-        @ch_from_socket.receive
-      rescue e : Channel::ClosedError
-        nil
+        @socket.receive
       end
   
       def send(msg : Protobuf::Message)
-        @socket_reader.send(msg)
+        @socket.send(msg)
       end
-  
-      # def close!
-      #   @socket_reader.close!
-      # end
   
       def add_version
         write do 
